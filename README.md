@@ -69,6 +69,8 @@ El sistema permite:
 
 ## ⚙️ Tecnologías Utilizadas
 
+## ⚙️ Tecnologías Utilizadas
+
 ### 🔧 Backend
 
 * PHP 8.1
@@ -94,8 +96,6 @@ El sistema permite:
 * Twilio (Notificaciones SMS)
 * OpenAI (Análisis inteligente)
 
----
-
 ## 💡 Funcionalidades Principales
 
 * Registro y gestión de proyectos
@@ -103,4 +103,3 @@ El sistema permite:
 * Dashboard con métricas en tiempo real
 * Reportes de rendimiento
 * Alertas y notificaciones
-* Control de acceso por roles
