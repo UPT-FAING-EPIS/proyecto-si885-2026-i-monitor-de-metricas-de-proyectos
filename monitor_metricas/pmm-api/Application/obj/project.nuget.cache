@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "iKUdaKaKMtw=",
+  "success": true,
+  "projectFilePath": "C:\\Github\\proyecto-si885-2026-i-monitor-de-metricas-de-proyectos\\monitor_metricas\\pmm-api\\Application\\ProjectMetricsMonitor.Application.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Ryzen\\.nuget\\packages\\fluentvalidation\\11.10.0\\fluentvalidation.11.10.0.nupkg.sha512"
+  ],
+  "logs": []
+}
