@@ -1,9 +1,0 @@
-node_modules
-dist
-.git
-.gitignore
-.vscode
-*.log
-npm-debug.log*
-coverage
-Dockerfile
