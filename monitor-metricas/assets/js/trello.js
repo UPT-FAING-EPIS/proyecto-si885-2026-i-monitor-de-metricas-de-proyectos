@@ -207,20 +207,15 @@ const renderWorkspaces = (workspaces) => {
         });
     });
 };
-const openModal = () => {
-    const modal = qs('#connectModal');
-    if (!modal)
-        return;
-    modal.classList.remove('hidden');
+const focusConnectForm = () => {
+    const card = qs('#connectCard');
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
     const input = qs('#trelloToken');
-    if (input)
-        input.focus();
-};
-const closeModal = () => {
-    const modal = qs('#connectModal');
-    if (!modal)
-        return;
-    modal.classList.add('hidden');
+    if (input) {
+        window.setTimeout(() => input.focus(), 150);
+    }
 };
 const refresh = async () => {
     const status = await api('/api/trello/status');
@@ -319,17 +314,9 @@ const init = () => {
     const connect = qs('#connectBtn');
     const disconnect = qs('#disconnectBtn');
     const syncNow = qs('#syncNowBtn');
-    const modalClose = qs('#connectModalClose');
-    const cancel = qs('#connectCancel');
     const form = qs('#connectForm');
-    connectTop?.addEventListener('click', openModal);
-    connect?.addEventListener('click', openModal);
-    modalClose?.addEventListener('click', closeModal);
-    cancel?.addEventListener('click', closeModal);
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape')
-            closeModal();
-    });
+    connectTop?.addEventListener('click', focusConnectForm);
+    connect?.addEventListener('click', focusConnectForm);
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const input = qs('#trelloToken');
@@ -343,7 +330,6 @@ const init = () => {
             await api('/api/trello/connect', { method: 'POST', body: { token } });
             if (input)
                 input.value = '';
-            closeModal();
             toast('Trello conectado', 'Conexión establecida correctamente.');
             await refresh();
         }

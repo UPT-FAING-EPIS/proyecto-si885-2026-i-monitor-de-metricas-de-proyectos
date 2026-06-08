@@ -22,6 +22,19 @@ function icon(string $name): string {
 $csrf = $_SESSION['csrf'] ?? '';
 $trelloStatus = isset($trelloStatus) && is_array($trelloStatus) ? $trelloStatus : null;
 $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '';
+$trelloApiKey = trim((string)($_ENV['TRELLO_API_KEY'] ?? $_SERVER['TRELLO_API_KEY'] ?? getenv('TRELLO_API_KEY') ?: ''));
+$appUrl = trim((string)($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? getenv('APP_URL') ?: ''));
+$trelloAuthorizeUrl = '';
+if ($trelloApiKey !== '' && $appUrl !== '') {
+    $trelloAuthorizeUrl = 'https://trello.com/1/authorize?' . http_build_query([
+        'expiration' => 'never',
+        'name' => 'Project Metrics Monitor',
+        'scope' => 'read',
+        'response_type' => 'token',
+        'key' => $trelloApiKey,
+        'return_url' => rtrim($appUrl, '/') . '/trello',
+    ]);
+}
 ?>
 <!doctype html>
 <html lang="es" class="h-full" data-theme="pm">
@@ -308,8 +321,33 @@ $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '
                     </div>
                     <button id="connectBtn" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto dark:bg-pm-500 dark:hover:bg-pm-400">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><?= icon('link') ?></svg>
-                      Conectar con Trello
+                      Ingresar token
                     </button>
+                  </div>
+
+                  <div id="connectCard" class="mt-5 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div class="min-w-0">
+                        <p class="text-sm font-semibold text-slate-900 dark:text-white">Conectar cuenta Trello</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Autoriza acceso de lectura en Trello, copia el token generado y pégalo aquí para habilitar la sincronización de métricas, alertas y dashboards.</p>
+                      </div>
+                      <?php if ($trelloAuthorizeUrl !== ''): ?>
+                        <a href="<?= h($trelloAuthorizeUrl) ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Generar token en Trello</a>
+                      <?php endif; ?>
+                    </div>
+
+                    <form id="connectForm" class="mt-4 grid gap-3">
+                      <input type="hidden" name="csrf" value="<?= h((string)$csrf) ?>" />
+                      <div class="grid gap-1.5">
+                        <label for="trelloToken" class="text-sm font-semibold text-slate-900 dark:text-white">Token de acceso</label>
+                        <input id="trelloToken" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu token de Trello" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Se recomienda un token con permisos de lectura para organizaciones, boards, lists y cards.</p>
+                      </div>
+
+                      <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                        <button id="connectSubmit" type="submit" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar y validar</button>
+                      </div>
+                    </form>
                   </div>
                 </div>
               </div>
@@ -365,38 +403,6 @@ $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '
           <div id="toast" class="pointer-events-none fixed bottom-4 right-4 z-50 hidden w-[92vw] max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-soft dark:border-slate-800 dark:bg-slate-900" role="status" aria-live="polite">
             <p id="toastTitle" class="text-sm font-semibold text-slate-900 dark:text-white">Listo</p>
             <p id="toastBody" class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Acción completada.</p>
-          </div>
-
-          <div id="connectModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="connectModalTitle">
-            <div class="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"></div>
-            <div class="relative mx-auto flex min-h-full max-w-lg items-center px-4 py-10">
-              <div class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900">
-                <div class="flex items-start justify-between gap-3">
-                  <div class="min-w-0">
-                    <h3 id="connectModalTitle" class="truncate text-sm font-semibold text-slate-900 dark:text-white">Conectar Trello</h3>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Ingresa tu token de Trello. Se guarda cifrado y nunca se muestra.</p>
-                  </div>
-                  <button id="connectModalClose" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" aria-label="Cerrar">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                  </button>
-                </div>
-
-                <form id="connectForm" class="mt-4 grid gap-3">
-                  <div class="grid gap-1.5">
-                    <label for="trelloToken" class="text-sm font-semibold text-slate-900 dark:text-white">Token</label>
-                    <input id="trelloToken" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu token…" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Se recomienda usar un token con permisos de lectura.</p>
-                  </div>
-
-                  <div class="mt-1 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                    <button id="connectCancel" type="button" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Cancelar</button>
-                    <button id="connectSubmit" type="submit" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar</button>
-                  </div>
-                </form>
-              </div>
-            </div>
           </div>
         </main>
       </div>
