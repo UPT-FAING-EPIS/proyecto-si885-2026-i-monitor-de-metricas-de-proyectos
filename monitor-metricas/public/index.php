@@ -43,6 +43,29 @@ $container->set(\App\Interfaces\ITrelloSyncService::class, static fn (\App\Core\
 ));
 $container->set(\App\Controllers\TrelloController::class, static fn (\App\Core\Container $c) => new \App\Controllers\TrelloController($c->get(\App\Interfaces\ITrelloSyncService::class)));
 
+$trelloInitErrorMessage = static function (\Throwable $e): string {
+    $message = trim($e->getMessage());
+    $lower = strtolower($message);
+
+    if (str_contains($lower, 'app_key')) {
+        return 'Falta configurar APP_KEY en Render. Agrega una APP_KEY segura en las variables del servicio y vuelve a desplegar.';
+    }
+
+    if (str_contains($lower, 'supabase db no está configurado') || str_contains($lower, 'supabase db no esta configurado')) {
+        return 'Faltan variables de PostgreSQL en Render. Configura SUPABASE_DB_HOST, SUPABASE_DB_PORT, SUPABASE_DB_NAME, SUPABASE_DB_USER y SUPABASE_DB_PASSWORD.';
+    }
+
+    if (str_contains($lower, 'pgsql') || str_contains($lower, 'sqlstate') || str_contains($lower, 'connection') || str_contains($lower, 'timeout')) {
+        return 'No se pudo conectar a Supabase PostgreSQL desde Render. Verifica host, usuario, password, sslmode y acceso de red.';
+    }
+
+    if (str_contains($lower, 'trello_connections') || str_contains($lower, 'trello_workspaces') || str_contains($lower, 'trello_boards') || str_contains($lower, 'trello_lists') || str_contains($lower, 'trello_cards') || str_contains($lower, 'sync_logs') || str_contains($lower, 'does not exist') || str_contains($lower, 'no existe')) {
+        return 'Faltan las tablas del modulo Trello en Supabase. Ejecuta la migracion SQL de Trello en el SQL Editor y vuelve a intentar.';
+    }
+
+    return 'No se pudo inicializar Trello. Verifica APP_KEY, variables de Supabase PostgreSQL y ejecuta las migraciones SQL.';
+};
+
 $router->get('/', static function (\App\Core\Request $req, \App\Core\Response $res): void {
     $res->redirect('/dashboard');
 });
@@ -67,82 +90,82 @@ $router->get('/trello', static function (\App\Core\Request $req, \App\Core\Respo
         error_log('Trello route init error: ' . $e->getMessage());
         \App\Core\View::render('pages/trello', [
             'trelloStatus' => ['connected' => false],
-            'trelloError' => 'No se pudo inicializar Trello. Verifica APP_KEY, variables de Supabase PostgreSQL y ejecuta las migraciones SQL.',
+            'trelloError' => $trelloInitErrorMessage($e),
             'csrf' => $_SESSION['csrf'] ?? '',
         ]);
     }
 });
 
-$router->get('/api/trello/status', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/status', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->status($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->post('/api/trello/connect', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->post('/api/trello/connect', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->connect($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->post('/api/trello/disconnect', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->post('/api/trello/disconnect', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->disconnect($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->post('/api/trello/sync', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->post('/api/trello/sync', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->sync($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->get('/api/trello/member', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/member', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->member($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->get('/api/trello/workspaces', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/workspaces', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->workspaces($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->get('/api/trello/boards', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/boards', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->boards($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->get('/api/trello/lists', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/lists', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->lists($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
-$router->get('/api/trello/cards', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+$router->get('/api/trello/cards', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->cards($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
-        $res->json(['ok' => false, 'error' => 'No se pudo inicializar Trello. Revisa APP_KEY, Supabase DB y migraciones.'], 503);
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
     }
 });
 

@@ -208,7 +208,7 @@ $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '
                 <span id="connectionDot" class="h-2.5 w-2.5 rounded-full bg-slate-400" aria-hidden="true"></span>
                 <span id="connectionText">No conectado</span>
               </span>
-              <button id="connectBtnTop" type="button" class="inline-flex items-center gap-2 rounded-xl bg-pm-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500 dark:hover:bg-pm-400">
+              <button id="connectBtnTop" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex items-center gap-2 rounded-xl bg-pm-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">
                 <span class="grid h-8 w-8 place-items-center rounded-lg bg-white/10" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('link') ?></svg>
                 </span>
@@ -232,11 +232,11 @@ $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '
                   <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Información de la cuenta y espacios detectados.</p>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button id="syncNowBtn" type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
+                  <button id="syncNowBtn" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><?= icon('sync') ?></svg>
                     Sincronizar ahora
                   </button>
-                  <button id="disconnectBtn" type="button" class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50">
+                  <button id="disconnectBtn" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200 dark:hover:bg-rose-950/50">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><?= icon('power') ?></svg>
                     Desconectar
                   </button>
@@ -306,7 +306,7 @@ $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '
                         </li>
                       </ul>
                     </div>
-                    <button id="connectBtn" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 sm:w-auto dark:bg-pm-500 dark:hover:bg-pm-400">
+                    <button id="connectBtn" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto dark:bg-pm-500 dark:hover:bg-pm-400">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><?= icon('link') ?></svg>
                       Conectar con Trello
                     </button>
