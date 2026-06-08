@@ -66,13 +66,72 @@ $trelloInitErrorMessage = static function (\Throwable $e): string {
     return 'No se pudo inicializar Trello. Verifica APP_KEY, variables de Supabase PostgreSQL y ejecuta las migraciones SQL.';
 };
 
-$renderTrelloBootstrapError = static function (string $message): void {
+$collectTrelloDiagnostics = static function (): array {
+    $env = static function (string $key, string $default = ''): string {
+        return (string)($_ENV[$key] ?? $_SERVER[$key] ?? getenv($key) ?: $default);
+    };
+
+    $host = trim($env('SUPABASE_DB_HOST'));
+    $port = trim($env('SUPABASE_DB_PORT', '5432'));
+    $db = trim($env('SUPABASE_DB_NAME', 'postgres'));
+    $user = trim($env('SUPABASE_DB_USER'));
+    $pass = $env('SUPABASE_DB_PASSWORD');
+    $sslmode = trim($env('SUPABASE_DB_SSLMODE', 'require'));
+    $appKey = $env('APP_KEY');
+
+    $diagnostics = [
+        'php_version' => PHP_VERSION,
+        'pdo_loaded' => extension_loaded('pdo'),
+        'pdo_pgsql_loaded' => extension_loaded('pdo_pgsql'),
+        'curl_loaded' => extension_loaded('curl'),
+        'openssl_loaded' => extension_loaded('openssl'),
+        'app_key_present' => $appKey !== '',
+        'app_key_length' => strlen($appKey),
+        'db_host' => $host,
+        'db_port' => $port,
+        'db_name' => $db,
+        'db_user' => $user,
+        'db_password_present' => $pass !== '',
+        'db_password_length' => strlen($pass),
+        'db_sslmode' => $sslmode,
+        'dsn' => 'pgsql:host=' . $host . ';port=' . $port . ';dbname=' . $db . ';sslmode=' . $sslmode,
+        'connection_test' => 'not-run',
+        'connection_error' => '',
+    ];
+
+    if ($host === '' || $user === '' || $pass === '') {
+        $diagnostics['connection_test'] = 'skipped-missing-env';
+        return $diagnostics;
+    }
+
+    if (!extension_loaded('pdo_pgsql')) {
+        $diagnostics['connection_test'] = 'skipped-missing-pdo_pgsql';
+        return $diagnostics;
+    }
+
+    try {
+        $pdo = new \PDO($diagnostics['dsn'], $user, $pass, [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_TIMEOUT => 10,
+        ]);
+        $pdo->query('select 1');
+        $diagnostics['connection_test'] = 'ok';
+    } catch (\Throwable $e) {
+        $diagnostics['connection_test'] = 'failed';
+        $diagnostics['connection_error'] = $e->getMessage();
+    }
+
+    return $diagnostics;
+};
+
+$renderTrelloBootstrapError = static function (string $message, array $diagnostics = []): void {
     http_response_code(200);
     header('Content-Type: text/html; charset=utf-8');
     $safe = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+    $pretty = htmlspecialchars(json_encode($diagnostics, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}', ENT_QUOTES, 'UTF-8');
     echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Trello no disponible</title>';
-    echo '<style>body{font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0;padding:32px}.card{max-width:760px;margin:40px auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(2,6,23,.08)}h1{margin:0 0 12px;font-size:24px}p{line-height:1.6}a{color:#155fe0;text-decoration:none}.muted{color:#475569;font-size:14px}</style>';
-    echo '</head><body><div class="card"><h1>Trello no pudo inicializarse</h1><p>' . $safe . '</p><p class="muted">Revisa las variables del servicio en Render y la migración SQL del módulo Trello. Cuando lo corrijas, vuelve a abrir <code>/trello</code>.</p><p><a href="/settings?tab=integrations">Volver a Configuración</a></p></div></body></html>';
+    echo '<style>body{font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0;padding:32px}.card{max-width:920px;margin:40px auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(2,6,23,.08)}h1{margin:0 0 12px;font-size:24px}p{line-height:1.6}a{color:#155fe0;text-decoration:none}.muted{color:#475569;font-size:14px}pre{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:12px;overflow:auto;font-size:12px}</style>';
+    echo '</head><body><div class="card"><h1>Trello no pudo inicializarse</h1><p>' . $safe . '</p><p class="muted">Revisa las variables del servicio en Render y la migración SQL del módulo Trello. Cuando lo corrijas, vuelve a abrir <code>/trello</code>.</p><h2>Diagnostico</h2><pre>' . $pretty . '</pre><p><a href="/settings?tab=integrations">Volver a Configuración</a></p></div></body></html>';
     exit;
 };
 
@@ -93,12 +152,16 @@ $router->get('/analytics', [new \App\Controllers\AnalyticsController(), 'index']
 $router->get('/alerts', [new \App\Controllers\AlertsController(), 'index']);
 $router->get('/powerbi', [new \App\Controllers\PowerBIController(), 'index']);
 $router->get('/settings', [new \App\Controllers\SettingsController(), 'index']);
-$router->get('/trello', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage, $renderTrelloBootstrapError): void {
+$router->get('/trello', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage, $collectTrelloDiagnostics, $renderTrelloBootstrapError): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->index($req, $res);
     } catch (\Throwable $e) {
-        error_log('Trello route init error: ' . $e->getMessage());
-        $renderTrelloBootstrapError($trelloInitErrorMessage($e));
+        $diagnostics = $collectTrelloDiagnostics();
+        error_log('Trello route init error: ' . json_encode([
+            'message' => $e->getMessage(),
+            'diagnostics' => $diagnostics,
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $renderTrelloBootstrapError($trelloInitErrorMessage($e), $diagnostics);
     }
 });
 
