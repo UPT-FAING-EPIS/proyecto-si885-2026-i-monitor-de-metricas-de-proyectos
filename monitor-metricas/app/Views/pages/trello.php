@@ -21,6 +21,7 @@ function icon(string $name): string {
 
 $csrf = $_SESSION['csrf'] ?? '';
 $trelloStatus = isset($trelloStatus) && is_array($trelloStatus) ? $trelloStatus : null;
+$trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '';
 ?>
 <!doctype html>
 <html lang="es" class="h-full" data-theme="pm">
@@ -215,6 +216,13 @@ $trelloStatus = isset($trelloStatus) && is_array($trelloStatus) ? $trelloStatus 
               </button>
             </div>
           </div>
+
+          <?php if ($trelloError !== ''): ?>
+            <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
+              <p class="font-semibold">Trello no pudo inicializarse</p>
+              <p class="mt-1 text-xs text-amber-800 dark:text-amber-200"><?= h($trelloError) ?></p>
+            </div>
+          <?php endif; ?>
 
           <section class="mt-6 grid gap-4 xl:grid-cols-3">
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft xl:col-span-2 dark:border-slate-800 dark:bg-slate-900">
