@@ -8,13 +8,16 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Exceptions\SynchronizationException;
 use App\Exceptions\TrelloConnectionException;
+use App\Interfaces\IProjectMetricsService;
 use App\Interfaces\ITrelloSyncService;
 use Throwable;
 
 final class TrelloController extends Controller
 {
-    public function __construct(private readonly ITrelloSyncService $trelloSync)
-    {
+    public function __construct(
+        private readonly ITrelloSyncService $trelloSync,
+        private readonly IProjectMetricsService $metrics,
+    ) {
     }
 
     public function index(Request $request, Response $response): void
@@ -22,7 +25,21 @@ final class TrelloController extends Controller
         $this->requireAuth($response);
         $userId = (string)($_SESSION['user']['id'] ?? '');
         $status = $userId !== '' ? $this->trelloSync->status($userId) : ['connected' => false];
-        $this->render('pages/trello', ['trelloStatus' => $status, 'csrf' => $_SESSION['csrf'] ?? '']);
+        $metrics = $userId !== '' ? $this->metrics->getOverview($userId) : [
+            'summary' => [
+                'workspaces' => 0,
+                'boards' => 0,
+                'lists' => 0,
+                'total_tasks' => 0,
+                'completed_tasks' => 0,
+                'pending_tasks' => 0,
+                'overdue_tasks' => 0,
+                'progress_percentage' => 0.0,
+            ],
+            'boards' => [],
+            'latest_sync' => null,
+        ];
+        $this->render('pages/trello', ['trelloStatus' => $status, 'trelloMetrics' => $metrics, 'csrf' => $_SESSION['csrf'] ?? '']);
     }
 
     public function status(Request $request, Response $response): void
@@ -136,6 +153,19 @@ final class TrelloController extends Controller
             $response->json(['ok' => true, 'data' => $this->trelloSync->getCards($userId, $boardId)]);
         } catch (Throwable $e) {
             $response->json(['ok' => false, 'error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function metrics(Request $request, Response $response): void
+    {
+        $userId = (string)($_SESSION['user']['id'] ?? '');
+        if ($userId === '') {
+            $response->json(['ok' => false, 'error' => 'No autenticado.'], 401);
+        }
+        try {
+            $response->json(['ok' => true, 'data' => $this->metrics->getOverview($userId)]);
+        } catch (Throwable $e) {
+            $response->json(['ok' => false, 'error' => 'No se pudieron calcular las métricas del proyecto.'], 500);
         }
     }
 

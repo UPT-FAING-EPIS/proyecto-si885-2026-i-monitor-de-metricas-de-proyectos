@@ -30,6 +30,8 @@ $container->set(\App\Repositories\TrelloBoardRepository::class, static fn (\App\
 $container->set(\App\Repositories\TrelloListRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\TrelloListRepository($c->get('pdo')));
 $container->set(\App\Repositories\TrelloCardRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\TrelloCardRepository($c->get('pdo')));
 $container->set(\App\Repositories\SyncLogRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\SyncLogRepository($c->get('pdo')));
+$container->set(\App\Repositories\ProjectMetricsRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\ProjectMetricsRepository($c->get('pdo')));
+$container->set(\App\Interfaces\IProjectMetricsService::class, static fn (\App\Core\Container $c) => new \App\Services\ProjectMetricsService($c->get(\App\Repositories\ProjectMetricsRepository::class)));
 $container->set(\App\Interfaces\ITrelloSyncService::class, static fn (\App\Core\Container $c) => new \App\Services\TrelloSyncService(
     $c->get('pdo'),
     $c->get('crypto'),
@@ -41,7 +43,10 @@ $container->set(\App\Interfaces\ITrelloSyncService::class, static fn (\App\Core\
     $c->get(\App\Repositories\TrelloCardRepository::class),
     $c->get(\App\Repositories\SyncLogRepository::class),
 ));
-$container->set(\App\Controllers\TrelloController::class, static fn (\App\Core\Container $c) => new \App\Controllers\TrelloController($c->get(\App\Interfaces\ITrelloSyncService::class)));
+$container->set(\App\Controllers\TrelloController::class, static fn (\App\Core\Container $c) => new \App\Controllers\TrelloController(
+    $c->get(\App\Interfaces\ITrelloSyncService::class),
+    $c->get(\App\Interfaces\IProjectMetricsService::class),
+));
 
 $trelloInitErrorMessage = static function (\Throwable $e): string {
     $message = trim($e->getMessage());
@@ -232,6 +237,14 @@ $router->get('/api/trello/lists', static function (\App\Core\Request $req, \App\
 $router->get('/api/trello/cards', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
     try {
         $container->get(\App\Controllers\TrelloController::class)->cards($req, $res);
+    } catch (\Throwable $e) {
+        error_log('Trello API init error: ' . $e->getMessage());
+        $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);
+    }
+});
+$router->get('/api/trello/metrics', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage): void {
+    try {
+        $container->get(\App\Controllers\TrelloController::class)->metrics($req, $res);
     } catch (\Throwable $e) {
         error_log('Trello API init error: ' . $e->getMessage());
         $res->json(['ok' => false, 'error' => $trelloInitErrorMessage($e)], 503);

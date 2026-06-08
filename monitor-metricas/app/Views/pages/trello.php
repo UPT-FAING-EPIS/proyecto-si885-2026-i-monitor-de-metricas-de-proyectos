@@ -21,6 +21,7 @@ function icon(string $name): string {
 
 $csrf = $_SESSION['csrf'] ?? '';
 $trelloStatus = isset($trelloStatus) && is_array($trelloStatus) ? $trelloStatus : null;
+$trelloMetrics = isset($trelloMetrics) && is_array($trelloMetrics) ? $trelloMetrics : ['summary' => [], 'boards' => [], 'latest_sync' => null];
 $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '';
 $trelloApiKey = trim((string)($_ENV['TRELLO_API_KEY'] ?? $_SERVER['TRELLO_API_KEY'] ?? getenv('TRELLO_API_KEY') ?: ''));
 $appUrl = trim((string)($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? getenv('APP_URL') ?: ''));
@@ -88,6 +89,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
       window.__PM = window.__PM || {};
       window.__PM.csrf = <?= json_encode((string)$csrf) ?>;
       window.__PM.trelloStatus = <?= json_encode($trelloStatus) ?>;
+      window.__PM.trelloMetrics = <?= json_encode($trelloMetrics) ?>;
     </script>
   </head>
   <body class="h-full bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
@@ -289,6 +291,48 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
 
                   <div id="workspaces" class="mt-4 grid gap-2 sm:grid-cols-2"></div>
                 </div>
+
+                <div class="mt-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <p class="text-sm font-semibold text-slate-900 dark:text-white">Métricas del proyecto</p>
+                      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Indicadores calculados desde boards, lists y cards sincronizadas.</p>
+                    </div>
+                    <span id="syncMeta" class="rounded-full bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Sin datos</span>
+                  </div>
+
+                  <div class="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Total tareas</p>
+                      <p id="metricTotalTasks" class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Completadas</p>
+                      <p id="metricCompletedTasks" class="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-300">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Pendientes</p>
+                      <p id="metricPendingTasks" class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Vencidas</p>
+                      <p id="metricOverdueTasks" class="mt-2 text-2xl font-semibold text-rose-600 dark:text-rose-300">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Boards activos</p>
+                      <p id="metricBoards" class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Avance</p>
+                      <p id="metricProgress" class="mt-2 text-2xl font-semibold text-pm-700 dark:text-pm-300">0%</p>
+                    </div>
+                  </div>
+
+                  <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div class="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 dark:bg-slate-950 dark:text-white">Boards con mayor carga</div>
+                    <div id="boardMetrics" class="divide-y divide-slate-200 dark:divide-slate-800"></div>
+                  </div>
+                </div>
               </div>
 
               <div id="disconnectedPanel" class="mt-5">
@@ -355,54 +399,56 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
 
             <aside class="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900">
               <div>
-                <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Configuración de sincronización</h2>
-                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Define cómo y cuándo actualizar datos.</p>
+                <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Flujo funcional</h2>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Solo se muestran acciones operativas disponibles para el monitoreo de métricas.</p>
               </div>
 
-              <form id="syncSettings" class="mt-5 grid gap-4" aria-label="Configuración de sincronización">
-                <fieldset class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
-                  <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Modo</legend>
-                  <div class="mt-3 grid gap-3">
-                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
-                      <input id="modeAuto" name="mode" type="radio" value="auto" class="mt-1 h-4 w-4 text-pm-600 focus:ring-pm-500 dark:bg-slate-950 dark:text-pm-400 dark:focus:ring-pm-400" checked />
-                      <span class="min-w-0">
-                        <span class="block font-semibold text-slate-900 dark:text-white">Sincronización automática</span>
-                        <span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Actualiza según la frecuencia configurada.</span>
-                      </span>
-                    </label>
-                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
-                      <input id="modeManual" name="mode" type="radio" value="manual" class="mt-1 h-4 w-4 text-pm-600 focus:ring-pm-500 dark:bg-slate-950 dark:text-pm-400 dark:focus:ring-pm-400" />
-                      <span class="min-w-0">
-                        <span class="block font-semibold text-slate-900 dark:text-white">Sincronización manual</span>
-                        <span class="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">Solo actualiza al presionar “Sincronizar ahora”.</span>
-                      </span>
-                    </label>
-                  </div>
-                </fieldset>
-
-                <div class="grid gap-1.5">
-                  <label for="frequency" class="text-sm font-semibold text-slate-900 dark:text-white">Frecuencia de actualización</label>
-                  <select id="frequency" name="frequency" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15">
-                    <option value="15">Cada 15 minutos</option>
-                    <option value="30" selected>Cada 30 minutos</option>
-                    <option value="60">Cada 1 hora</option>
-                    <option value="240">Cada 4 horas</option>
-                    <option value="1440">Cada 24 horas</option>
-                  </select>
-                  <p id="frequencyHelp" class="text-xs text-slate-500 dark:text-slate-400">Recomendado: 30–60 min para tableros activos.</p>
+              <div class="mt-5 grid gap-3">
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">1. Conecta Trello</p>
+                  <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Genera tu token, valida la cuenta y registra la conexión segura.</p>
                 </div>
-
-                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
-                  <p class="font-semibold text-slate-900 dark:text-white">Permisos</p>
-                  <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">La integración solicita acceso de lectura a workspaces y boards para generar métricas.</p>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">2. Sincroniza</p>
+                  <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Trae workspaces, boards, lists y cards para alimentar métricas y alertas.</p>
                 </div>
-              </form>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">3. Monitorea KPIs</p>
+                  <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Visualiza tareas totales, completadas, pendientes, vencidas y avance porcentual.</p>
+                </div>
+                <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">Uso en dashboards</p>
+                  <p id="latestSyncDetail" class="mt-1 text-xs text-slate-600 dark:text-slate-400">Aun no hay sincronizaciones registradas para este usuario.</p>
+                </div>
+              </div>
             </aside>
           </section>
 
           <div id="toast" class="pointer-events-none fixed bottom-4 right-4 z-50 hidden w-[92vw] max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-soft dark:border-slate-800 dark:bg-slate-900" role="status" aria-live="polite">
             <p id="toastTitle" class="text-sm font-semibold text-slate-900 dark:text-white">Listo</p>
             <p id="toastBody" class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Acción completada.</p>
+          </div>
+
+          <div id="resultModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="resultModalTitle">
+            <div class="absolute inset-0 bg-slate-950/50 backdrop-blur-sm"></div>
+            <div class="relative mx-auto flex min-h-full max-w-md items-center px-4 py-10">
+              <div class="w-full rounded-2xl border border-slate-200 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+                <div class="flex items-start gap-3">
+                  <div id="resultModalIcon" class="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="min-w-0 flex-1">
+                    <h3 id="resultModalTitle" class="text-base font-semibold text-slate-900 dark:text-white">Operación completada</h3>
+                    <p id="resultModalBody" class="mt-1 text-sm text-slate-600 dark:text-slate-300">La acción se ejecutó correctamente.</p>
+                  </div>
+                </div>
+                <div class="mt-5 flex justify-end">
+                  <button id="resultModalClose" type="button" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500 dark:hover:bg-pm-400">Entendido</button>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
       </div>

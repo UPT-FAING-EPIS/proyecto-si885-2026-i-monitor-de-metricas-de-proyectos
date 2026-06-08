@@ -48,6 +48,33 @@ const toast = (title, body) => {
     el.classList.remove('hidden');
     window.setTimeout(() => el.classList.add('hidden'), 2400);
 };
+const setResultTone = (success) => {
+    const icon = qs('#resultModalIcon');
+    if (!icon)
+        return;
+    icon.className = `grid h-12 w-12 place-items-center rounded-2xl ${success
+        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+        : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'}`;
+    icon.innerHTML = success
+        ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+        : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.72 3h16.92a2 2 0 0 0 1.72-3L13.71 3.86a2 2 0 0 0-3.42 0Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+};
+const showResultModal = (success, title, body) => {
+    const modal = qs('#resultModal');
+    const titleEl = qs('#resultModalTitle');
+    const bodyEl = qs('#resultModalBody');
+    if (!modal || !titleEl || !bodyEl) {
+        toast(title, body);
+        return;
+    }
+    titleEl.textContent = title;
+    bodyEl.textContent = body;
+    setResultTone(success);
+    modal.classList.remove('hidden');
+};
+const closeResultModal = () => {
+    qs('#resultModal')?.classList.add('hidden');
+};
 const formatDate = (iso) => {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime()))
@@ -207,6 +234,64 @@ const renderWorkspaces = (workspaces) => {
         });
     });
 };
+const renderMetrics = (metrics) => {
+    const summary = metrics?.summary ?? {};
+    const latestSync = metrics?.latest_sync ?? null;
+    const boards = Array.isArray(metrics?.boards) ? metrics.boards : [];
+    const setText = (selector, value) => {
+        const el = qs(selector);
+        if (el)
+            el.textContent = String(value);
+    };
+    setText('#metricTotalTasks', Number(summary.total_tasks) || 0);
+    setText('#metricCompletedTasks', Number(summary.completed_tasks) || 0);
+    setText('#metricPendingTasks', Number(summary.pending_tasks) || 0);
+    setText('#metricOverdueTasks', Number(summary.overdue_tasks) || 0);
+    setText('#metricBoards', Number(summary.boards) || 0);
+    setText('#metricProgress', `${Number(summary.progress_percentage || 0).toFixed(1)}%`);
+    const syncMeta = qs('#syncMeta');
+    if (syncMeta) {
+        if (latestSync?.finished_at || latestSync?.started_at) {
+            const label = latestSync?.finished_at ? formatDate(latestSync.finished_at) : formatDate(latestSync.started_at);
+            syncMeta.textContent = `Ultima sync: ${label}`;
+        }
+        else {
+            syncMeta.textContent = 'Sin sincronizaciones';
+        }
+    }
+    const latestSyncDetail = qs('#latestSyncDetail');
+    if (latestSyncDetail) {
+        latestSyncDetail.textContent = latestSync
+            ? `Ultima ejecucion ${latestSync.sync_type} · Boards ${latestSync.boards_processed} · Lists ${latestSync.lists_processed} · Cards ${latestSync.cards_processed} · Errores ${latestSync.errors_count}.`
+            : 'Aun no hay sincronizaciones registradas para este usuario.';
+    }
+    const boardMetrics = qs('#boardMetrics');
+    if (boardMetrics) {
+        if (boards.length === 0) {
+            boardMetrics.innerHTML = '<div class="px-4 py-5 text-sm text-slate-500 dark:text-slate-400">Sin datos de boards. Conecta Trello y ejecuta una sincronizacion para calcular metricas.</div>';
+            return;
+        }
+        boardMetrics.innerHTML = boards
+            .map((board) => {
+            const workspace = board.workspace_name ? `<p class="text-xs text-slate-500 dark:text-slate-400">${String(board.workspace_name)}</p>` : '';
+            return `
+            <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">${String(board.name ?? 'Board')}</p>
+                ${workspace}
+              </div>
+              <div class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Total ${Number(board.total_tasks) || 0}</span>
+                <span class="rounded-full bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20">Comp. ${Number(board.completed_tasks) || 0}</span>
+                <span class="rounded-full bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20">Pend. ${Number(board.pending_tasks) || 0}</span>
+                <span class="rounded-full bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20">Venc. ${Number(board.overdue_tasks) || 0}</span>
+              </div>
+            </div>
+          `;
+        })
+            .join('');
+    }
+};
 const focusConnectForm = () => {
     const card = qs('#connectCard');
     if (card) {
@@ -220,12 +305,15 @@ const focusConnectForm = () => {
 const refresh = async () => {
     const status = await api('/api/trello/status');
     renderConnection(status);
+    const [metrics, member, workspaces] = await Promise.all([
+        api('/api/trello/metrics').catch(() => null),
+        status?.connected ? api('/api/trello/member').catch(() => null) : Promise.resolve(null),
+        status?.connected ? api('/api/trello/workspaces').catch(() => []) : Promise.resolve([]),
+    ]);
+    if (metrics)
+        renderMetrics(metrics);
     if (!status?.connected)
         return;
-    const [member, workspaces] = await Promise.all([
-        api('/api/trello/member').catch(() => null),
-        api('/api/trello/workspaces').catch(() => []),
-    ]);
     if (member)
         renderMember(member);
     if (Array.isArray(workspaces))
@@ -253,49 +341,14 @@ const syncSelected = async () => {
             totalDuration += Number(res?.duration_seconds) || 0;
         }
         await refresh();
-        toast('Sincronización completa', `Boards: ${totalBoards} · Lists: ${totalLists} · Cards: ${totalCards} · Errores: ${totalErrors} · ${totalDuration}s`);
+        showResultModal(true, 'Sincronizacion completada', `Se actualizaron ${totalBoards} boards, ${totalLists} listas y ${totalCards} cards en ${totalDuration}s. Errores detectados: ${totalErrors}.`);
     }
     catch (e) {
-        toast('Error', e?.message ? String(e.message) : 'No se pudo sincronizar.');
+        showResultModal(false, 'Sincronizacion fallida', e?.message ? String(e.message) : 'No se pudo sincronizar Trello.');
     }
     finally {
         setBusy(false);
     }
-};
-const wireSyncSettings = () => {
-    const settingsKey = 'pm:trello:settings';
-    const form = qs('#syncSettings');
-    const modeAuto = qs('#modeAuto');
-    const modeManual = qs('#modeManual');
-    const frequency = qs('#frequency');
-    if (!form || !modeAuto || !modeManual || !frequency)
-        return;
-    const load = () => {
-        const raw = localStorage.getItem(settingsKey);
-        if (!raw)
-            return;
-        try {
-            const parsed = JSON.parse(raw);
-            if (parsed.mode === 'manual')
-                modeManual.checked = true;
-            if (parsed.mode === 'auto')
-                modeAuto.checked = true;
-            if (typeof parsed.frequency === 'string')
-                frequency.value = parsed.frequency;
-        }
-        catch { }
-    };
-    const update = () => {
-        const mode = modeManual.checked ? 'manual' : 'auto';
-        frequency.disabled = mode === 'manual';
-        localStorage.setItem(settingsKey, JSON.stringify({ mode, frequency: frequency.value }));
-    };
-    load();
-    update();
-    form.addEventListener('change', () => {
-        update();
-        toast('Configuración guardada', 'Se actualizó el modo de sincronización.');
-    });
 };
 const init = () => {
     setTheme(getTheme());
@@ -309,12 +362,18 @@ const init = () => {
         });
     }
     wireSidebar();
-    wireSyncSettings();
     const connectTop = qs('#connectBtnTop');
     const connect = qs('#connectBtn');
     const disconnect = qs('#disconnectBtn');
     const syncNow = qs('#syncNowBtn');
     const form = qs('#connectForm');
+    const resultModalClose = qs('#resultModalClose');
+    const resultModal = qs('#resultModal');
+    resultModalClose?.addEventListener('click', closeResultModal);
+    resultModal?.addEventListener('click', (e) => {
+        if (e.target === resultModal)
+            closeResultModal();
+    });
     connectTop?.addEventListener('click', focusConnectForm);
     connect?.addEventListener('click', focusConnectForm);
     form?.addEventListener('submit', async (e) => {
@@ -330,11 +389,11 @@ const init = () => {
             await api('/api/trello/connect', { method: 'POST', body: { token } });
             if (input)
                 input.value = '';
-            toast('Trello conectado', 'Conexión establecida correctamente.');
             await refresh();
+            showResultModal(true, 'Trello conectado', 'La cuenta fue validada y ya puedes sincronizar datos para el monitoreo de metricas del proyecto.');
         }
         catch (err) {
-            toast('Error', err?.message ? String(err.message) : 'No se pudo conectar Trello.');
+            showResultModal(false, 'Conexion fallida', err?.message ? String(err.message) : 'No se pudo conectar Trello.');
         }
         finally {
             setBusy(false);
@@ -357,8 +416,11 @@ const init = () => {
     });
     syncNow?.addEventListener('click', () => void syncSelected());
     const initial = window.__PM?.trelloStatus ?? null;
+    const initialMetrics = window.__PM?.trelloMetrics ?? null;
     if (initial)
         renderConnection(initial);
+    if (initialMetrics)
+        renderMetrics(initialMetrics);
     void refresh();
 };
 window.addEventListener('DOMContentLoaded', init);
