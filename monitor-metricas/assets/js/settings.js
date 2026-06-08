@@ -50,16 +50,21 @@ const toast = (title, body) => {
     window.setTimeout(() => el.classList.add('hidden'), 2400);
 };
 const storageKey = 'pm:settings:state';
+const getTabFromQuery = () => {
+    const raw = new URLSearchParams(location.search).get('tab');
+    const allowed = ['profile', 'security', 'integrations', 'trello', 'powerbi', 'notifications'];
+    return raw && allowed.includes(raw) ? raw : null;
+};
 const getTabFromHash = () => {
     const raw = (location.hash || '').replace('#', '').trim();
     const allowed = ['profile', 'security', 'integrations', 'trello', 'powerbi', 'notifications'];
     return allowed.includes(raw) ? raw : null;
 };
-const setHash = (tab) => {
-    const next = `#${tab}`;
-    if (location.hash === next)
-        return;
-    history.replaceState(null, '', next);
+const setTabInUrl = (tab) => {
+    const url = new URL(location.href);
+    url.searchParams.set('tab', tab);
+    url.hash = '';
+    history.replaceState(null, '', url.toString());
 };
 const applyTab = (tab) => {
     qsa('.tab-btn').forEach((btn) => {
@@ -85,7 +90,7 @@ const applyTab = (tab) => {
     qsa('.tab-panel').forEach((panel) => panel.classList.add('hidden'));
     const panel = qs(`#tab-${tab}`);
     panel?.classList.remove('hidden');
-    setHash(tab);
+    setTabInUrl(tab);
 };
 const readSnapshot = () => {
     const inputs = qsa('input[type="checkbox"], input[type="radio"]');
@@ -160,16 +165,23 @@ const init = () => {
     wireChangeTracking();
     updateSaveUI();
     qsa('.tab-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
             const id = btn.getAttribute('data-tab') ?? 'profile';
             applyTab(id);
         });
     });
+    const tabFromQuery = getTabFromQuery();
     const tabFromHash = getTabFromHash();
-    const defaultTab = tabFromHash ?? 'profile';
+    const defaultTab = tabFromQuery ?? tabFromHash ?? 'profile';
     applyTab(defaultTab);
     window.addEventListener('hashchange', () => {
         const t = getTabFromHash();
+        if (t)
+            applyTab(t);
+    });
+    window.addEventListener('popstate', () => {
+        const t = getTabFromQuery() ?? getTabFromHash();
         if (t)
             applyTab(t);
     });
@@ -188,4 +200,3 @@ try {
     window.addEventListener('DOMContentLoaded', init);
 }
 catch { }
-

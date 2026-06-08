@@ -1,0 +1,9 @@
+.git
+.github
+.vscode
+node_modules
+vendor
+.env
+.env.*
+docker-compose.yml
+assets/ts

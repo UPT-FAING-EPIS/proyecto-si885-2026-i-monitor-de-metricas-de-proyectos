@@ -12,7 +12,12 @@ final class SettingsController extends Controller
     public function index(Request $request, Response $response): void
     {
         $this->requireAuth($response);
-        $this->render('pages/settings');
+        $tab = (string)$request->input('tab', 'profile');
+        $allowed = ['profile', 'security', 'integrations', 'trello', 'powerbi', 'notifications'];
+        if (!in_array($tab, $allowed, true)) {
+            $tab = 'profile';
+        }
+        $this->render('pages/settings', ['activeTab' => $tab]);
     }
 }
 

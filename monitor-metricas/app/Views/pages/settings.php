@@ -25,6 +25,8 @@ function icon(string $name): string {
     ];
     return $icons[$name] ?? '';
 }
+
+$activeTab = isset($activeTab) && is_string($activeTab) && $activeTab !== '' ? $activeTab : 'profile';
 ?>
 <!doctype html>
 <html lang="es" class="h-full" data-theme="pm">
@@ -210,47 +212,47 @@ function icon(string $name): string {
             <div class="flex flex-col gap-4 p-5 lg:flex-row">
               <nav class="lg:w-80" aria-label="Pestañas de configuración">
                 <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-1" role="tablist">
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl bg-pm-50 px-4 py-3 text-left text-sm font-semibold text-pm-800 ring-1 ring-pm-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20" role="tab" aria-selected="true" data-tab="profile">
+                  <a href="/settings?tab=profile" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'profile' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'profile' ? 'true' : 'false' ?>" data-tab="profile">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-white text-pm-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-pm-200 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('user') ?></svg>
                     </span>
                     Perfil
-                  </button>
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" role="tab" aria-selected="false" data-tab="security">
+                  </a>
+                  <a href="/settings?tab=security" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'security' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'security' ? 'true' : 'false' ?>" data-tab="security">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('lock') ?></svg>
                     </span>
                     Seguridad
-                  </button>
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" role="tab" aria-selected="false" data-tab="integrations">
+                  </a>
+                  <a href="/settings?tab=integrations" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'integrations' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'integrations' ? 'true' : 'false' ?>" data-tab="integrations">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('plug') ?></svg>
                     </span>
                     Integraciones
-                  </button>
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" role="tab" aria-selected="false" data-tab="trello">
+                  </a>
+                  <a href="/settings?tab=trello" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'trello' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'trello' ? 'true' : 'false' ?>" data-tab="trello">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('trello') ?></svg>
                     </span>
                     Trello
-                  </button>
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" role="tab" aria-selected="false" data-tab="powerbi">
+                  </a>
+                  <a href="/settings?tab=powerbi" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'powerbi' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'powerbi' ? 'true' : 'false' ?>" data-tab="powerbi">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('powerbi') ?></svg>
                     </span>
                     Power BI
-                  </button>
-                  <button class="tab-btn flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800" role="tab" aria-selected="false" data-tab="notifications">
+                  </a>
+                  <a href="/settings?tab=notifications" class="tab-btn flex items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500<?= $activeTab === 'notifications' ? ' bg-pm-50 text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20' : ' border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800' ?>" role="tab" aria-selected="<?= $activeTab === 'notifications' ? 'true' : 'false' ?>" data-tab="notifications">
                     <span class="grid h-10 w-10 place-items-center rounded-xl bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('notif') ?></svg>
                     </span>
                     Notificaciones
-                  </button>
+                  </a>
                 </div>
               </nav>
 
               <div class="min-w-0 flex-1">
-                <div id="tab-profile" class="tab-panel">
+                <div id="tab-profile" class="tab-panel<?= $activeTab === 'profile' ? '' : ' hidden' ?>">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Perfil</h3>
@@ -292,7 +294,7 @@ function icon(string $name): string {
                   </div>
                 </div>
 
-                <div id="tab-security" class="tab-panel hidden">
+                <div id="tab-security" class="tab-panel<?= $activeTab === 'security' ? '' : ' hidden' ?>">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Seguridad</h3>
@@ -333,7 +335,7 @@ function icon(string $name): string {
                   </div>
                 </div>
 
-                <div id="tab-integrations" class="tab-panel hidden">
+                <div id="tab-integrations" class="tab-panel<?= $activeTab === 'integrations' ? '' : ' hidden' ?>">
                   <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Integraciones</h3>
                   <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Administración general de conectores.</p>
                   <div class="mt-4 grid gap-3 sm:grid-cols-2">
@@ -362,7 +364,7 @@ function icon(string $name): string {
                   </div>
                 </div>
 
-                <div id="tab-trello" class="tab-panel hidden">
+                <div id="tab-trello" class="tab-panel<?= $activeTab === 'trello' ? '' : ' hidden' ?>">
                   <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Trello</h3>
                   <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Preferencias del conector (resumen).</p>
                   <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
@@ -377,7 +379,7 @@ function icon(string $name): string {
                   </div>
                 </div>
 
-                <div id="tab-powerbi" class="tab-panel hidden">
+                <div id="tab-powerbi" class="tab-panel<?= $activeTab === 'powerbi' ? '' : ' hidden' ?>">
                   <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Power BI</h3>
                   <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Embebidos, permisos y accesos.</p>
                   <div class="mt-4 grid gap-3">
@@ -398,7 +400,7 @@ function icon(string $name): string {
                   </div>
                 </div>
 
-                <div id="tab-notifications" class="tab-panel hidden">
+                <div id="tab-notifications" class="tab-panel<?= $activeTab === 'notifications' ? '' : ' hidden' ?>">
                   <h3 class="text-sm font-semibold text-slate-900 dark:text-white">Notificaciones</h3>
                   <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Alertas y recordatorios de operación.</p>
                   <div class="mt-4 grid gap-3">

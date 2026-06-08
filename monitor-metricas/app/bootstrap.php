@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
 $autoload = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
@@ -51,9 +50,16 @@ if (class_exists(\Dotenv\Dotenv::class)) {
     }
 }
 
+$appEnv = (string)($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? getenv('APP_ENV') ?: 'local');
+$isProduction = strtolower($appEnv) === 'production';
+ini_set('display_errors', $isProduction ? '0' : '1');
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     ini_set('session.cookie_httponly', '1');
     ini_set('session.use_strict_mode', '1');
+    if ($isProduction) {
+        ini_set('session.cookie_secure', '1');
+    }
     if (!headers_sent()) {
         $started = @session_start();
         if ($started !== true) {
