@@ -22,6 +22,12 @@
 ## Log Evidence
 - Instrumentacion agregada en `public/index.php` para exponer diagnostico sanitizado en `/trello`.
 - Se registran en Render logs: DSN efectivo, presencia/longitud de variables, extensiones PHP y error real de `PDO`.
+- Evidencia recibida desde Render:
+  - `pdo_pgsql_loaded = true`
+  - `connection_test = ok`
+  - `connection_error = ""`
+  - La conectividad PostgreSQL ya esta confirmada.
+- Nueva hipotesis principal: faltan tablas del modulo Trello y el clasificador estaba mostrando un mensaje de conexion por el orden de evaluacion.
 
 ## Verification Conclusion
 - Pending

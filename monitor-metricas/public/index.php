@@ -55,12 +55,12 @@ $trelloInitErrorMessage = static function (\Throwable $e): string {
         return 'Faltan variables de PostgreSQL en Render. Configura SUPABASE_DB_HOST, SUPABASE_DB_PORT, SUPABASE_DB_NAME, SUPABASE_DB_USER y SUPABASE_DB_PASSWORD.';
     }
 
-    if (str_contains($lower, 'pgsql') || str_contains($lower, 'sqlstate') || str_contains($lower, 'connection') || str_contains($lower, 'timeout')) {
-        return 'No se pudo conectar a Supabase PostgreSQL desde Render. Verifica host, usuario, password, sslmode y acceso de red.';
+    if (str_contains($lower, 'trello_connections') || str_contains($lower, 'trello_workspaces') || str_contains($lower, 'trello_boards') || str_contains($lower, 'trello_lists') || str_contains($lower, 'trello_cards') || str_contains($lower, 'sync_logs') || str_contains($lower, 'relation') || str_contains($lower, 'does not exist') || str_contains($lower, 'no existe')) {
+        return 'Faltan las tablas del modulo Trello en Supabase. Ejecuta la migracion SQL de Trello en el SQL Editor y vuelve a intentar.';
     }
 
-    if (str_contains($lower, 'trello_connections') || str_contains($lower, 'trello_workspaces') || str_contains($lower, 'trello_boards') || str_contains($lower, 'trello_lists') || str_contains($lower, 'trello_cards') || str_contains($lower, 'sync_logs') || str_contains($lower, 'does not exist') || str_contains($lower, 'no existe')) {
-        return 'Faltan las tablas del modulo Trello en Supabase. Ejecuta la migracion SQL de Trello en el SQL Editor y vuelve a intentar.';
+    if (str_contains($lower, 'pgsql') || str_contains($lower, 'sqlstate') || str_contains($lower, 'connection') || str_contains($lower, 'timeout')) {
+        return 'No se pudo conectar a Supabase PostgreSQL desde Render. Verifica host, usuario, password, sslmode y acceso de red.';
     }
 
     return 'No se pudo inicializar Trello. Verifica APP_KEY, variables de Supabase PostgreSQL y ejecuta las migraciones SQL.';
