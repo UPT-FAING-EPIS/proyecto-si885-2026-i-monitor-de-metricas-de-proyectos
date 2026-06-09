@@ -22,6 +22,9 @@ El monorepo tambien incluye un subproyecto web independiente en `app-web`, que n
 - `Universidad Privada de Tacna`
 - `Facultad de Ingenieria`
 - `Escuela Profesional de Ingenieria de Sistemas`
+## Enlace Power BI
+https://app.powerbi.com/reportEmbed?reportId=dc55a052-7a47-41aa-8666-151b48ebc993&autoAuth=true&ctid=b6b466ee-468d-4011-b9fc-fbdcf82ac90a
+
 
 ## Estructura del Repositorio
 
