@@ -118,6 +118,11 @@ if (isset($flash) && is_array($flash) && ($flash['type'] ?? '') === 'success') {
               <input type="hidden" name="csrf" value="<?= h((string)($csrf ?? '')) ?>" />
 
               <div class="grid gap-1.5">
+                <label for="full_name" class="text-sm font-medium text-slate-800 dark:text-slate-200">Nombre completo</label>
+                <input id="full_name" name="full_name" type="text" autocomplete="name" required class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
+              </div>
+
+              <div class="grid gap-1.5">
                 <label for="email" class="text-sm font-medium text-slate-800 dark:text-slate-200">Correo electrónico</label>
                 <input id="email" name="email" type="email" autocomplete="email" required class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
                 <p class="text-xs text-slate-500 dark:text-slate-400">Se usará para autenticación y recuperación.</p>
@@ -148,4 +153,3 @@ if (isset($flash) && is_array($flash) && ($flash['type'] ?? '') === 'success') {
     </main>
   </body>
 </html>
-

@@ -73,10 +73,15 @@ final class AuthController extends Controller
             $response->redirect('/register');
         }
 
+        $fullName = trim((string)$request->input('full_name', ''));
         $email = trim((string)$request->input('email', ''));
         $password = (string)$request->input('password', '');
         $confirm = (string)$request->input('password_confirm', '');
 
+        if ($fullName === '') {
+            $_SESSION['flash'] = ['type' => 'error', 'message' => 'Ingresa tu nombre completo.'];
+            $response->redirect('/register');
+        }
         if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
             $_SESSION['flash'] = ['type' => 'error', 'message' => 'Ingresa un correo válido.'];
             $response->redirect('/register');
@@ -90,7 +95,7 @@ final class AuthController extends Controller
             $response->redirect('/register');
         }
 
-        $result = $this->supabaseRegister($email, $password);
+        $result = $this->supabaseRegister($fullName, $email, $password);
         if ($result['ok'] !== true) {
             $_SESSION['flash'] = ['type' => 'error', 'message' => (string)($result['message'] ?? 'No se pudo crear la cuenta.')];
             $response->redirect('/register');
@@ -156,13 +161,14 @@ final class AuthController extends Controller
             'user' => [
                 'id' => (string)($user['id'] ?? ''),
                 'email' => (string)($user['email'] ?? $email),
+                'name' => $this->extractDisplayName($user),
             ],
             'session' => $session,
         ];
     }
 
     /** @return array{ok:bool,message?:string,user?:array<string,mixed>,session?:array<string,mixed>} */
-    private function supabaseRegister(string $email, string $password): array
+    private function supabaseRegister(string $fullName, string $email, string $password): array
     {
         $url = $this->env('SUPABASE_URL');
         $anon = $this->env('SUPABASE_ANON_KEY');
@@ -172,6 +178,9 @@ final class AuthController extends Controller
 
         $endpoint = rtrim($url, '/') . '/auth/v1/signup';
         $resp = $this->httpJson('POST', $endpoint, [
+            'data' => [
+                'full_name' => $fullName,
+            ],
             'email' => $email,
             'password' => $password,
         ], [
@@ -201,9 +210,30 @@ final class AuthController extends Controller
             'user' => [
                 'id' => (string)($user['id'] ?? ''),
                 'email' => (string)($user['email'] ?? $email),
+                'name' => $this->extractDisplayName($user, $fullName),
             ],
             'session' => $session,
         ];
+    }
+
+    /** @param array<string,mixed> $user */
+    private function extractDisplayName(array $user, string $fallback = ''): string
+    {
+        $metadata = isset($user['user_metadata']) && is_array($user['user_metadata']) ? $user['user_metadata'] : [];
+        $candidates = [
+            (string)($metadata['full_name'] ?? ''),
+            (string)($metadata['name'] ?? ''),
+            (string)($user['full_name'] ?? ''),
+            (string)($user['name'] ?? ''),
+            $fallback,
+        ];
+        foreach ($candidates as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate !== '') {
+                return $candidate;
+            }
+        }
+        return '';
     }
 
     /** @param array<string,mixed> $body @param list<string> $extraHeaders @return array{ok:bool,status:int,data?:mixed,message?:string} */

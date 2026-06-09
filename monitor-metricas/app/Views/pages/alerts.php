@@ -146,140 +146,14 @@ $payload = $payload ?? [
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/assets/css/app.css" />
-    <script id="pmAlertsData" type="application/json"><?= h((string)json_encode($payload, JSON_UNESCAPED_UNICODE)) ?></script>
+    <script id="pmAlertsData" type="application/json"><?= (string)json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
   </head>
-  <body class="h-full bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
-    <div class="min-h-screen">
-      <div id="sidebarOverlay" class="fixed inset-0 z-30 hidden bg-slate-950/40 backdrop-blur-sm md:hidden" aria-hidden="true"></div>
-
-      <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 -translate-x-full border-r border-slate-200 bg-white shadow-soft transition-transform md:translate-x-0 md:shadow-none dark:border-slate-800 dark:bg-slate-900" aria-label="Sidebar">
-        <div class="flex h-full flex-col">
-          <div class="flex items-center gap-3 px-5 py-5">
-            <div class="grid h-10 w-10 place-items-center rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-950" aria-hidden="true">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M4 18V6a2 2 0 0 1 2-2h3v16H6a2 2 0 0 1-2-2Z" fill="currentColor" opacity="0.9"/>
-                <path d="M10 4h4v16h-4V4Z" fill="currentColor" opacity="0.8"/>
-                <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3V4Z" fill="currentColor"/>
-              </svg>
-            </div>
-            <div class="min-w-0">
-              <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">Project Metrics Monitor</p>
-              <p class="truncate text-xs text-slate-500 dark:text-slate-400">Centro de monitoreo</p>
-            </div>
-          </div>
-
-          <nav class="flex-1 px-3" aria-label="Navegación">
-            <a href="/dashboard" class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-300 dark:hover:bg-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <path d="M4 13h6V4H4v9Zm0 7h6v-5H4v5Zm10 0h6V11h-6v9Zm0-18v7h6V2h-6Z" fill="currentColor"/>
-                </svg>
-              </span>
-              Dashboard
-            </a>
-            <a href="/projects" class="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-300 dark:hover:bg-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('folder') ?></svg>
-              </span>
-              Proyectos
-            </a>
-            <a href="/analytics" class="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-300 dark:hover:bg-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('chart') ?></svg>
-              </span>
-              Analítica
-            </a>
-
-            <a href="/alerts" class="mt-2 flex items-center gap-3 rounded-xl bg-pm-50 px-3 py-2.5 text-sm font-semibold text-pm-800 ring-1 ring-pm-100 dark:bg-pm-500/10 dark:text-pm-200 dark:ring-pm-500/20">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-white text-pm-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-pm-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('alert') ?></svg>
-              </span>
-              Alertas
-            </a>
-
-            <a href="/powerbi" class="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-300 dark:hover:bg-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('powerbi') ?></svg>
-              </span>
-              Power BI
-            </a>
-            <a href="/settings" class="mt-2 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-300 dark:hover:bg-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-lg bg-slate-50 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('settings') ?></svg>
-              </span>
-              Configuración
-            </a>
-
-            <div class="mt-5 px-3">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Señales</p>
-            </div>
-            <div class="mt-2 grid gap-2 px-3">
-              <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950">
-                <span class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                  <span class="grid h-7 w-7 place-items-center rounded-lg bg-white text-slate-900 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><?= icon('pulse') ?></svg>
-                  </span>
-                  Monitoreo activo
-                </span>
-                <span class="font-semibold text-slate-900 dark:text-white">ON</span>
-              </div>
-              <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-950">
-                <span class="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-                  <span class="grid h-7 w-7 place-items-center rounded-lg bg-white text-slate-900 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><?= icon('shield') ?></svg>
-                  </span>
-                  Reglas
-                </span>
-                <span class="font-semibold text-slate-900 dark:text-white">12</span>
-              </div>
-            </div>
-          </nav>
-
-          <div class="px-5 py-5">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-950">
-              <p class="font-semibold text-slate-900 dark:text-white">Objetivo</p>
-              <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Prioriza Riesgo Alto y coordina acciones de mitigación.</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <div class="md:pl-72">
-        <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-          <div class="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-3 sm:px-6">
-            <button id="sidebarOpen" type="button" class="inline-flex items-center justify-center rounded-xl p-2 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 md:hidden dark:text-slate-200 dark:ring-slate-800 dark:hover:bg-slate-800" aria-label="Abrir menú">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><?= icon('menu') ?></svg>
-            </button>
-
-            <div class="relative flex-1">
-              <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('search') ?></svg>
-              </span>
-              <label class="sr-only" for="search">Buscar</label>
-              <input id="search" type="search" placeholder="Buscar alertas por proyecto, señal o acción…" class="w-full rounded-xl border border-slate-200 bg-white px-10 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
-            </div>
-
-            <button id="themeToggle" type="button" class="hidden items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 sm:inline-flex dark:text-slate-200 dark:ring-slate-800 dark:hover:bg-slate-800">
-              <span class="grid h-8 w-8 place-items-center rounded-lg bg-slate-50 text-slate-800 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-100 dark:ring-slate-800" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><?= icon('moon') ?></svg>
-              </span>
-              <span id="themeLabel">Dark mode</span>
-            </button>
-
-            <button type="button" class="relative inline-flex items-center justify-center rounded-xl p-2 text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:text-slate-200 dark:ring-slate-800 dark:hover:bg-slate-800" aria-label="Notificaciones">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><?= icon('bell') ?></svg>
-              <span class="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-semibold text-white">3</span>
-            </button>
-
-            <div class="inline-flex items-center gap-3 rounded-xl px-2 py-2 ring-1 ring-slate-200 dark:ring-slate-800">
-              <span class="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-pm-500 to-sky-500 text-sm font-semibold text-white" aria-hidden="true">MG</span>
-              <span class="hidden min-w-0 sm:block">
-                <span class="block truncate text-sm font-semibold text-slate-900 dark:text-white">María Gómez</span>
-                <span class="block truncate text-xs text-slate-500 dark:text-slate-400">Gerencia</span>
-              </span>
-            </div>
-          </div>
-        </header>
+    <?php require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'partials' . DIRECTORY_SEPARATOR . 'app_shell.php'; ?>
+  <?php pm_render_app_shell_start([
+      'title' => 'Alertas',
+      'active' => 'alerts',
+      'search_placeholder' => 'Buscar alertas o proyectos...',
+  ]); ?>
 
         <main class="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">
           <div class="flex flex-wrap items-end justify-between gap-4">
@@ -419,8 +293,7 @@ $payload = $payload ?? [
             <p id="toastBody" class="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Acción completada.</p>
           </div>
         </main>
-      </div>
-    </div>
+  <?php pm_render_app_shell_end(); ?>
 
     <script type="module" src="/assets/js/alerts.js"></script>
   </body>
