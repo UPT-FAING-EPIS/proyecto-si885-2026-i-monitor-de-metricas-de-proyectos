@@ -384,7 +384,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                       <button id="authorizeTrelloBtn" type="button" <?= ($trelloAuthorizeUrl === '' || $trelloError !== '') ? 'disabled' : '' ?> class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Abrir Trello</button>
                     </div>
 
-                    <form id="connectForm" class="mt-4 grid gap-3">
+                    <form id="connectForm" class="mt-4 grid gap-3" method="post" action="/trello" novalidate>
                       <input type="hidden" name="csrf" value="<?= h((string)$csrf) ?>" />
                       <div class="grid gap-1.5">
                         <label for="trelloToken" class="text-sm font-semibold text-slate-900 dark:text-white">Token de acceso</label>
@@ -392,8 +392,9 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                         <p class="text-xs text-slate-500 dark:text-slate-400">Flujo recomendado: usar el botón “Abrir Trello”. Este campo queda solo como alternativa manual.</p>
                       </div>
 
-                      <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <button id="connectSubmit" type="submit" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar manualmente</button>
+                      <div class="flex flex-col gap-2 sm:flex-row sm:justify-between">
+                        <button id="focusManualConnectBtn" type="button" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Usar token manual</button>
+                        <button id="connectSubmit" type="button" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar manualmente</button>
                       </div>
                     </form>
                   </div>

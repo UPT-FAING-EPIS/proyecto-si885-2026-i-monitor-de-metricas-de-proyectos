@@ -104,6 +104,16 @@ const openAuthorizePopup = () => {
     }
     popup.focus();
 };
+const focusManualConnect = () => {
+    const card = qs('#connectCard');
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    const input = qs('#trelloToken');
+    if (input) {
+        window.setTimeout(() => input.focus(), 150);
+    }
+};
 const readTokenFromHash = () => {
     const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
     if (!hash)
@@ -422,14 +432,7 @@ const renderMetrics = (metrics) => {
     }
 };
 const focusConnectForm = () => {
-    const card = qs('#connectCard');
-    if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    const authorize = qs('#authorizeTrelloBtn');
-    if (authorize) {
-        window.setTimeout(() => authorize.focus(), 150);
-    }
+    openAuthorizePopup();
 };
 const refresh = async () => {
     const status = await api('/api/trello/status');
@@ -497,6 +500,8 @@ const init = () => {
     const disconnect = qs('#disconnectBtn');
     const syncNow = qs('#syncNowBtn');
     const form = qs('#connectForm');
+    const connectSubmit = qs('#connectSubmit');
+    const focusManualConnectBtn = qs('#focusManualConnectBtn');
     const resultModalClose = qs('#resultModalClose');
     const resultModal = qs('#resultModal');
     resultModalClose?.addEventListener('click', closeResultModal);
@@ -506,8 +511,14 @@ const init = () => {
     });
     connectTop?.addEventListener('click', focusConnectForm);
     connect?.addEventListener('click', focusConnectForm);
+    focusManualConnectBtn?.addEventListener('click', focusManualConnect);
     form?.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const input = qs('#trelloToken');
+        const token = input ? String(input.value ?? '').trim() : '';
+        void connectWithToken(token, 'manual');
+    });
+    connectSubmit?.addEventListener('click', () => {
         const input = qs('#trelloToken');
         const token = input ? String(input.value ?? '').trim() : '';
         void connectWithToken(token, 'manual');
