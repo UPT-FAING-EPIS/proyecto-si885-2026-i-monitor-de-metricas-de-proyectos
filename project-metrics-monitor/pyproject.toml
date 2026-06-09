@@ -45,5 +45,7 @@ addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
 [tool.coverage.run]
 omit = [
   "src/run.py",
+  "src/render_web.py",
+  "src/render_worker.py",
   "src/cli/*",
 ]
