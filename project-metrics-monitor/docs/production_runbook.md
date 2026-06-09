@@ -349,7 +349,7 @@ Por eso el `render.yaml` del proyecto fue corregido para usar:
 
 - `type: worker`
 - `rootDir: project-metrics-monitor`
-- `disk.mountPath: /opt/render/project/src/storage`
+- `disk.mountPath: /opt/render/project/src/project-metrics-monitor/storage`
 
 ### 10.2 Como crear el servicio
 

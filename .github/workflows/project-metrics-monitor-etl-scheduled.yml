@@ -30,7 +30,7 @@ jobs:
       GITHUB_OWNER: ${{ github.event.inputs.owner || vars.PMM_OWNER || vars.GITHUB_OWNER || 'microsoft' }}
       GITHUB_REPOS: ${{ github.event.inputs.repos || vars.PMM_REPOS || vars.GITHUB_REPOS || 'vscode' }}
       ETL_SINCE: ${{ github.event.inputs.since || vars.PMM_ETL_SINCE || vars.ETL_SINCE || '2026-01-01T00:00:00Z' }}
-      DB_PATH: project-metrics-monitor/database/project_metrics_ci.db
+      DB_PATH: database/project_metrics_ci.db
       GITHUB_TOKEN: ${{ secrets.PMM_GH_TOKEN }}
     steps:
       - name: Checkout

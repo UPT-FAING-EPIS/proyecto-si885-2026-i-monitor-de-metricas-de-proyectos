@@ -42,7 +42,7 @@ Servicio correcto:
 
 - `type: worker`
 - `rootDir: project-metrics-monitor`
-- `disk.mountPath: /opt/render/project/src/storage`
+- `disk.mountPath: /opt/render/project/src/project-metrics-monitor/storage`
 
 Variables clave:
 
