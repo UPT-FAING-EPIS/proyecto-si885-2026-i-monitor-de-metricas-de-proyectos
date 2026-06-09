@@ -1,105 +1,168 @@
-# 📊 Sistema de Monitoreo de Métricas de Proyectos
+# Proyecto SI885 2026-I
 
-## 📌 Descripción del Proyecto
+Monorepo del proyecto academico `proyecto-si885-2026-i-monitor-de-metricas-de-proyectos`.
 
-El **Sistema de Monitoreo de Métricas de Proyectos** es una plataforma web diseñada para optimizar la gestión, seguimiento y evaluación del desempeño de proyectos.
+## Descripcion General
 
-Este sistema permite centralizar la información, gestionar tareas, registrar tiempos y responsables, así como generar indicadores clave que facilitan la toma de decisiones basada en datos.
+Este repositorio contiene los entregables y componentes tecnicos del curso de Inteligencia de Negocios. Actualmente, el componente mas completo y operativo es `project-metrics-monitor`, una solucion ETL que extrae metricas reales desde GitHub, las transforma a un modelo analitico y las publica para consumo en Power BI.
 
----
+El monorepo tambien incluye un subproyecto web independiente en `app-web`, que no corresponde al flujo ETL principal documentado para despliegue y analitica.
 
-## 🎯 Objetivo General
+## Integrantes
 
-Desarrollar un sistema que permita monitorear y analizar métricas de proyectos para mejorar el control, seguimiento y productividad.
+- `Serrano Ibanez, Nestor Juice Yomar`
+- `Jimenez Romero, Josue Andre`
 
----
+## Docente
 
-## 👨‍🏫 Profesor
+- `Mag. Patrick Cuadros Quiroga`
 
-**Mag. Patrick Cuadros Quiroga**
+## Institucion
 
----
+- `Universidad Privada de Tacna`
+- `Facultad de Ingenieria`
+- `Escuela Profesional de Ingenieria de Sistemas`
 
-## 👨‍💻 Integrantes
+## Estructura del Repositorio
 
-* **Serrano Ibañez, Nestor Juice Yomar**
-* **Jiménez Romero, Josué André**
+```text
+proyecto-si885-2026-i-monitor-de-metricas-de-proyectos/
+├── .github/
+│   └── workflows/
+│       ├── project-metrics-monitor-ci.yml
+│       └── project-metrics-monitor-etl-scheduled.yml
+├── app-web/
+│   ├── app/
+│   ├── docs/
+│   └── public/
+├── project-metrics-monitor/
+│   ├── database/
+│   ├── docs/
+│   ├── src/
+│   ├── tests/
+│   ├── README.md
+│   ├── render.yaml
+│   └── render.paid.yaml
+├── FD01-Informe-Factibilidad.md
+├── FD02-Informe-Vision.md
+└── README.md
+```
 
----
+## Subproyecto Principal
 
-## 🏫 Universidad
+### `project-metrics-monitor`
 
-**Universidad Privada de Tacna**
-Facultad de Ingeniería
-Escuela Profesional de Ingeniería de Sistemas
+Es el subproyecto principal para la parte de inteligencia de negocios y despliegue. Implementa:
 
----
+- extraccion de datos desde GitHub REST API y GraphQL API;
+- transformacion a un modelo dimensional;
+- carga incremental en SQLite;
+- exportaciones CSV y Parquet;
+- dataset publico anonimizado;
+- integracion con Power BI;
+- automatizacion mediante GitHub Actions;
+- publicacion gratuita de CSV en Render.
 
-## 🧠 Problemática
+## Funcionalidades Reales de `project-metrics-monitor`
 
-Actualmente, la gestión de proyectos se realiza de forma manual o con herramientas dispersas, lo que genera:
+- Extraccion de:
+  - commits
+  - pull requests
+  - issues
+  - releases
+  - workflows
+  - contribuyentes
+- Carga incremental con `etl_control`
+- Generacion de vistas analiticas como:
+  - `vw_repo_summary`
+  - `vw_quality_metrics`
+  - `vw_throughput`
+  - `vw_public_repo_summary`
+  - `vw_public_quality_metrics`
+- Exportaciones listas para Power BI
+- Despliegue gratuito en Render para consumo via URL
 
-* Falta de control
-* Desorganización
-* Baja productividad
-* Dificultad para medir el rendimiento
+## Tecnologias Utilizadas
 
----
+### `project-metrics-monitor`
 
-## 🚀 Solución Propuesta
+- Python `3.12+`
+- SQLite
+- Pandas
+- PyArrow
+- Requests
+- Pytest
+- Ruff
+- Black
+- GitHub Actions
+- Render
+- Power BI
 
-El sistema permite:
+### `app-web`
 
-* Gestión de proyectos y tareas
-* Asignación de responsables
-* Seguimiento en tiempo real
-* Generación de reportes y métricas
-* Visualización mediante dashboards
-* Notificaciones y alertas
+- PHP
+- MVC basico
+- vistas web
 
----
+## GitHub Actions
 
-## 👥 Usuarios del Sistema
+Los workflows activos del monorepo para `project-metrics-monitor` estan en la raiz del repositorio:
 
-* **Gestor de Proyectos**
-* **Miembro del Equipo**
-* **Usuario General / Estudiante**
+- `/.github/workflows/project-metrics-monitor-ci.yml`
+- `/.github/workflows/project-metrics-monitor-etl-scheduled.yml`
 
----
+Estos workflows validan calidad, ejecutan pruebas y permiten correr la ETL de forma programada o manual.
 
-## ⚙️ Tecnologías Utilizadas
+## Render
 
-## ⚙️ Tecnologías Utilizadas
+Para `project-metrics-monitor` existen dos blueprints:
 
-### 🔧 Backend
+- `project-metrics-monitor/render.yaml`
+  - despliegue gratis
+  - publica CSV por URL
+- `project-metrics-monitor/render.paid.yaml`
+  - despliegue persistente
+  - usa worker y almacenamiento durable
 
-* PHP 8.1
-* Apache / Nginx
-* MariaDB / MySQL
-* MongoDB
+## Power BI
 
-### 🎨 Frontend
+El flujo recomendado actualmente consiste en consumir los CSV publicos generados por `project-metrics-monitor` desde Render o importar los archivos locales exportados por la ETL.
 
-* HTML5
-* CSS3
-* JavaScript
-* Bootstrap
+Ejemplo de consumo web:
 
-### 🛠️ Herramientas
+```text
+https://TU-SERVICIO.onrender.com/public/vw_public_repo_summary.csv
+https://TU-SERVICIO.onrender.com/public/vw_public_quality_metrics.csv
+```
 
-* Visual Studio Code / PHPStorm
-* Debian / Ubuntu Server
+## Documentacion Importante
 
-### ☁️ Servicios
+- Documentacion del subproyecto principal: `project-metrics-monitor/README.md`
+- Guia de despliegue: `project-metrics-monitor/docs/deployment.md`
+- Runbook operativo: `project-metrics-monitor/docs/production_runbook.md`
+- Guia de Power BI: `project-metrics-monitor/docs/power_bi.md`
+- Factibilidad: `FD01-Informe-Factibilidad.md`
+- Vision: `FD02-Informe-Vision.md`
 
-* VPS (Servidor en la nube)
-* Twilio (Notificaciones SMS)
-* OpenAI (Análisis inteligente)
+## Primeros Pasos
 
-## 💡 Funcionalidades Principales
+Si vas a trabajar con la parte principal del proyecto:
 
-* Registro y gestión de proyectos
-* Gestión de tareas (crear, asignar, actualizar)
-* Dashboard con métricas en tiempo real
-* Reportes de rendimiento
-* Alertas y notificaciones
+```powershell
+cd project-metrics-monitor
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Luego configura `GITHUB_TOKEN` en `.env` y ejecuta:
+
+```powershell
+python -m src.run --owner TU_OWNER --repos TU_REPO1,TU_REPO2 --since 2026-01-01T00:00:00Z --db-path database/project_metrics.db --export-dir exports --export-csv --export-parquet --public-export
+```
+
+## Nota Importante
+
+La documentacion operativa y los despliegues preparados durante esta etapa se centran en `project-metrics-monitor`. El `README.md` de ese subproyecto contiene el detalle tecnico actualizado.
