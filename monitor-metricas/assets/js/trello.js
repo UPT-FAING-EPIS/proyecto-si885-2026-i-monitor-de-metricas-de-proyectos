@@ -1,4 +1,7 @@
 const qs = (selector, root = document) => root.querySelector(selector);
+// #region debug-point A:module-loaded
+fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"A",location:"assets/js/trello.js:1",msg:"[DEBUG] trello.js loaded",data:{readyState:document.readyState,href:window.location.href},ts:Date.now()})}).catch(()=>{});
+// #endregion
 const setTheme = (theme) => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('pm:theme', theme);
@@ -93,6 +96,9 @@ const popupFeatures = () => {
 };
 const openAuthorizePopup = () => {
     const authorizeUrl = getAuthorizeUrl();
+    // #region debug-point D:authorize-click
+    fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"D",location:"assets/js/trello.js:97",msg:"[DEBUG] authorize handler invoked",data:{authorizeUrl,hasUrl:Boolean(authorizeUrl)},ts:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!authorizeUrl) {
         showResultModal(false, 'Autorizacion no disponible', 'Falta configurar la URL de autorizacion de Trello en el entorno.');
         return;
@@ -123,6 +129,9 @@ const readTokenFromHash = () => {
 };
 const connectWithToken = async (token, source = 'manual') => {
     const cleanToken = String(token ?? '').trim();
+    // #region debug-point E:manual-connect
+    fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"E",location:"assets/js/trello.js:128",msg:"[DEBUG] connectWithToken invoked",data:{source,tokenLength:cleanToken.length},ts:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!cleanToken) {
         if (source === 'manual') {
             toast('Token requerido', 'Ingresa el token para conectar Trello.');
@@ -483,6 +492,9 @@ const syncSelected = async () => {
     }
 };
 const init = () => {
+    // #region debug-point B:init-start
+    fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"B",location:"assets/js/trello.js:490",msg:"[DEBUG] init start",data:{hasWindowPm:Boolean(window.__PM),hasAuthorizeButton:Boolean(qs('#authorizeTrelloBtn')),hasConnectButton:Boolean(qs('#connectBtn')),hasForm:Boolean(qs('#connectForm'))},ts:Date.now()})}).catch(()=>{});
+    // #endregion
     setTheme(getTheme());
     updateThemeUI();
     const themeToggle = qs('#themeToggle');
@@ -541,6 +553,9 @@ const init = () => {
     syncNow?.addEventListener('click', () => void syncSelected());
     const initial = window.__PM?.trelloStatus ?? null;
     const initialMetrics = window.__PM?.trelloMetrics ?? null;
+    // #region debug-point C:events-wired
+    fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"C",location:"assets/js/trello.js:551",msg:"[DEBUG] init wired events",data:{hasInitial:Boolean(initial),hasMetrics:Boolean(initialMetrics),authorizeUrl:String(window.__PM?.trelloAuthorizeUrl ?? '').slice(0,80)},ts:Date.now()})}).catch(()=>{});
+    // #endregion
     if (handleAuthorizeCallback())
         return;
     if (initial)
@@ -549,4 +564,14 @@ const init = () => {
         renderMetrics(initialMetrics);
     void refresh();
 };
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener('DOMContentLoaded', () => {
+    try {
+        init();
+    }
+    catch (error) {
+        // #region debug-point B:init-error
+        fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"trello-buttons-dead",runId:"pre-fix",hypothesisId:"B",location:"assets/js/trello.js:560",msg:"[DEBUG] init crashed",data:{message:error instanceof Error ? error.message : String(error)},ts:Date.now()})}).catch(()=>{});
+        // #endregion
+        throw error;
+    }
+});

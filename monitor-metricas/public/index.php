@@ -1,6 +1,50 @@
 <?php
 declare(strict_types=1);
 
+$requestPath = (string)(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/');
+
+if (str_starts_with($requestPath, '/assets/')) {
+    $projectRoot = dirname(__DIR__);
+    $assetsRoot = realpath($projectRoot . DIRECTORY_SEPARATOR . 'assets');
+    $relativePath = ltrim(str_replace('/', DIRECTORY_SEPARATOR, $requestPath), DIRECTORY_SEPARATOR);
+    $assetPath = realpath($projectRoot . DIRECTORY_SEPARATOR . $relativePath);
+
+    $isInsideAssets = $assetsRoot !== false
+        && $assetPath !== false
+        && is_file($assetPath)
+        && (
+            $assetPath === $assetsRoot
+            || str_starts_with($assetPath, $assetsRoot . DIRECTORY_SEPARATOR)
+        );
+
+    if (!$isInsideAssets) {
+        http_response_code(404);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Not Found';
+        exit;
+    }
+
+    $extension = strtolower(pathinfo($assetPath, PATHINFO_EXTENSION));
+    $mimeTypes = [
+        'css' => 'text/css; charset=utf-8',
+        'js' => 'application/javascript; charset=utf-8',
+        'json' => 'application/json; charset=utf-8',
+        'svg' => 'image/svg+xml',
+        'png' => 'image/png',
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'gif' => 'image/gif',
+        'webp' => 'image/webp',
+        'woff' => 'font/woff',
+        'woff2' => 'font/woff2',
+    ];
+
+    header('Content-Type: ' . ($mimeTypes[$extension] ?? 'application/octet-stream'));
+    header('Content-Length: ' . (string)filesize($assetPath));
+    readfile($assetPath);
+    exit;
+}
+
 require dirname(__DIR__) . DIRECTORY_SEPARATOR . 'app' . DIRECTORY_SEPARATOR . 'bootstrap.php';
 
 if (!class_exists(\App\Core\Router::class)) {
