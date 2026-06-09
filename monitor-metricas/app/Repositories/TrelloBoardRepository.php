@@ -26,15 +26,14 @@ final class TrelloBoardRepository
                updated_at = now()
              returning id'
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'tid' => $dto->trelloId,
-            'wid' => $workspaceId,
-            'name' => $dto->name,
-            'description' => $dto->description,
-            'url' => $dto->url,
-            'closed' => $dto->closed,
-        ]);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':tid', $dto->trelloId, PDO::PARAM_STR);
+        $stmt->bindValue(':wid', $workspaceId, PDO::PARAM_INT);
+        $stmt->bindValue(':name', $dto->name, PDO::PARAM_STR);
+        $stmt->bindValue(':description', $dto->description, $dto->description === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':url', $dto->url, $dto->url === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':closed', $dto->closed, PDO::PARAM_BOOL);
+        $stmt->execute();
         $row = $stmt->fetch();
         return (int)($row['id'] ?? 0);
     }

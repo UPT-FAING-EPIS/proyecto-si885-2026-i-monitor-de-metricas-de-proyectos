@@ -32,16 +32,15 @@ final class TrelloCardRepository
                updated_at = now()
              returning id'
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'tid' => $dto->trelloId,
-            'lid' => $listId,
-            'bid' => $boardId,
-            'name' => $dto->name,
-            'description' => $dto->description,
-            'due_date' => $due,
-            'closed' => $dto->closed,
-        ]);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':tid', $dto->trelloId, PDO::PARAM_STR);
+        $stmt->bindValue(':lid', $listId, PDO::PARAM_INT);
+        $stmt->bindValue(':bid', $boardId, PDO::PARAM_INT);
+        $stmt->bindValue(':name', $dto->name, PDO::PARAM_STR);
+        $stmt->bindValue(':description', $dto->description, $dto->description === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':due_date', $due, $due === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        $stmt->bindValue(':closed', $dto->closed, PDO::PARAM_BOOL);
+        $stmt->execute();
         $row = $stmt->fetch();
         return (int)($row['id'] ?? 0);
     }

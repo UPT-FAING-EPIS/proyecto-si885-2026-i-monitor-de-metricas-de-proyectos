@@ -24,13 +24,12 @@ final class TrelloListRepository
                updated_at = now()
              returning id'
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'tid' => $dto->trelloId,
-            'bid' => $boardId,
-            'name' => $dto->name,
-            'closed' => $dto->closed,
-        ]);
+        $stmt->bindValue(':user_id', $userId, PDO::PARAM_STR);
+        $stmt->bindValue(':tid', $dto->trelloId, PDO::PARAM_STR);
+        $stmt->bindValue(':bid', $boardId, PDO::PARAM_INT);
+        $stmt->bindValue(':name', $dto->name, PDO::PARAM_STR);
+        $stmt->bindValue(':closed', $dto->closed, PDO::PARAM_BOOL);
+        $stmt->execute();
         $row = $stmt->fetch();
         return (int)($row['id'] ?? 0);
     }
