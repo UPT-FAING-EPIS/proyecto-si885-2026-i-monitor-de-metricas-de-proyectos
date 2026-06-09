@@ -217,6 +217,23 @@ $projects = $projects ?? [
     ],
 ];
 
+$summary = $summary ?? [
+    'projects' => count($projects),
+    'workspaces' => 0,
+    'tasksTotal' => array_sum(array_map(static fn (array $project): int => (int)($project['tasksTotal'] ?? 0), $projects)),
+    'tasksDone' => array_sum(array_map(static fn (array $project): int => (int)($project['tasksDone'] ?? 0), $projects)),
+    'tasksPending' => max(0, array_sum(array_map(static fn (array $project): int => (int)($project['tasksTotal'] ?? 0), $projects)) - array_sum(array_map(static fn (array $project): int => (int)($project['tasksDone'] ?? 0), $projects))),
+    'tasksOverdue' => array_sum(array_map(static fn (array $project): int => (int)($project['tasksOverdue'] ?? 0), $projects)),
+    'progress' => count($projects) > 0 ? (int)round(array_sum(array_map(static fn (array $project): int => (int)($project['progress'] ?? 0), $projects)) / count($projects)) : 0,
+    'lastSync' => $projects[0]['lastSync'] ?? '',
+];
+$statusSummary = $statusSummary ?? [
+    'enCurso' => count(array_filter($projects, static fn (array $project): bool => (string)($project['status'] ?? '') === 'En curso')),
+    'riesgo' => count(array_filter($projects, static fn (array $project): bool => (string)($project['status'] ?? '') === 'Riesgo')),
+    'completado' => count(array_filter($projects, static fn (array $project): bool => (string)($project['status'] ?? '') === 'Completado')),
+    'espera' => count(array_filter($projects, static fn (array $project): bool => (string)($project['status'] ?? '') === 'En espera')),
+];
+
 $payload = [
     'projects' => $projects,
 ];
@@ -383,6 +400,37 @@ $payload = [
               <span id="resultCount" class="rounded-full bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" role="status" aria-live="polite">0 resultados</span>
             </div>
           </div>
+
+          <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Proyectos sincronizados</p>
+              <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white"><?= h((string)($summary['projects'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400"><?= h((string)($summary['workspaces'] ?? 0)) ?> workspaces detectados</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Avance global</p>
+              <p class="mt-2 text-2xl font-semibold text-pm-700 dark:text-pm-300"><?= h((string)($summary['progress'] ?? 0)) ?>%</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400"><?= h((string)($summary['tasksDone'] ?? 0)) ?> tareas completadas</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Pendientes</p>
+              <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white"><?= h((string)($summary['tasksPending'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">de <?= h((string)($summary['tasksTotal'] ?? 0)) ?> tareas totales</p>
+            </article>
+            <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-soft dark:border-rose-900/50 dark:bg-rose-950/30">
+              <p class="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-200">Vencidas</p>
+              <p class="mt-2 text-2xl font-semibold text-rose-800 dark:text-rose-100"><?= h((string)($summary['tasksOverdue'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-rose-700/80 dark:text-rose-200/80">En riesgo: <?= h((string)($statusSummary['riesgo'] ?? 0)) ?> proyectos</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Estado actual</p>
+              <div class="mt-2 grid gap-1 text-sm text-slate-700 dark:text-slate-200">
+                <p>En curso: <?= h((string)($statusSummary['enCurso'] ?? 0)) ?></p>
+                <p>Completados: <?= h((string)($statusSummary['completado'] ?? 0)) ?></p>
+                <p>En espera: <?= h((string)($statusSummary['espera'] ?? 0)) ?></p>
+              </div>
+            </article>
+          </section>
 
           <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
             <div class="grid gap-3 lg:grid-cols-[1fr_190px_220px_1fr_auto] lg:items-end">

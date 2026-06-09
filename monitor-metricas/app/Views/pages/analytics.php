@@ -34,6 +34,32 @@ $payload = $payload ?? [
         ['id' => 'qa', 'name' => 'QA'],
         ['id' => 'data', 'name' => 'Data'],
     ],
+    'summary' => [
+        'projectCount' => 4,
+        'teamCount' => 6,
+        'totalTasks' => 0,
+        'completedTasks' => 0,
+        'pendingTasks' => 0,
+        'overdueTasks' => 0,
+        'progress' => 0,
+        'topProject' => 'Customer Portal',
+        'topProjectProgress' => 86,
+        'topTeam' => 'Producto',
+        'topTeamProgress' => 78,
+    ],
+];
+$summary = isset($payload['summary']) && is_array($payload['summary']) ? $payload['summary'] : [
+    'projectCount' => 0,
+    'teamCount' => 0,
+    'totalTasks' => 0,
+    'completedTasks' => 0,
+    'pendingTasks' => 0,
+    'overdueTasks' => 0,
+    'progress' => 0,
+    'topProject' => '',
+    'topProjectProgress' => 0,
+    'topTeam' => '',
+    'topTeamProgress' => 0,
 ];
 ?>
 <!doctype html>
@@ -229,6 +255,35 @@ $payload = $payload ?? [
               </label>
             </div>
           </div>
+
+          <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Proyectos analizados</p>
+              <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white"><?= h((string)($summary['projectCount'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400"><?= h((string)($summary['teamCount'] ?? 0)) ?> equipos detectados</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Avance global</p>
+              <p class="mt-2 text-2xl font-semibold text-pm-700 dark:text-pm-300"><?= h((string)($summary['progress'] ?? 0)) ?>%</p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400"><?= h((string)($summary['completedTasks'] ?? 0)) ?> completadas</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Tareas activas</p>
+              <p class="mt-2 text-2xl font-semibold text-slate-900 dark:text-white"><?= h((string)($summary['pendingTasks'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">de <?= h((string)($summary['totalTasks'] ?? 0)) ?> tareas</p>
+            </article>
+            <article class="rounded-2xl border border-rose-200 bg-rose-50 p-4 shadow-soft dark:border-rose-900/50 dark:bg-rose-950/30">
+              <p class="text-xs font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-200">Tareas vencidas</p>
+              <p class="mt-2 text-2xl font-semibold text-rose-800 dark:text-rose-100"><?= h((string)($summary['overdueTasks'] ?? 0)) ?></p>
+              <p class="mt-1 text-xs text-rose-700/80 dark:text-rose-200/80">Monitoreadas desde Trello</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Mejor rendimiento</p>
+              <p class="mt-2 truncate text-sm font-semibold text-slate-900 dark:text-white"><?= h((string)($summary['topProject'] ?? '')) ?></p>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Proyecto: <?= h((string)($summary['topProjectProgress'] ?? 0)) ?>%</p>
+              <p class="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">Equipo: <?= h((string)($summary['topTeam'] ?? '')) ?> (<?= h((string)($summary['topTeamProgress'] ?? 0)) ?>%)</p>
+            </article>
+          </section>
 
           <section class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-soft dark:border-slate-800 dark:bg-slate-900">
             <div class="flex flex-wrap items-center justify-between gap-3">

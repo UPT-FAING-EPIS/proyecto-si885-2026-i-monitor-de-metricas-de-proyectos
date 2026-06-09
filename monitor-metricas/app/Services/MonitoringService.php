@@ -67,9 +67,46 @@ final class MonitoringService implements IMonitoringService
 
     public function getProjectsData(string $userId): array
     {
+        $summary = $this->metrics->getSummary($userId);
+        $workspaces = $this->metrics->getWorkspaceBreakdown($userId, 100);
         $latestSync = $this->metrics->getLatestSyncForUser($userId);
+        $projects = array_map(fn (array $board): array => $this->mapBoardToProjectCard($board, $latestSync), $this->metrics->getBoardBreakdown($userId, 100));
+        $statusSummary = [
+            'enCurso' => 0,
+            'riesgo' => 0,
+            'completado' => 0,
+            'espera' => 0,
+        ];
+        foreach ($projects as $project) {
+            $status = (string)($project['status'] ?? '');
+            if ($status === 'Riesgo') {
+                $statusSummary['riesgo']++;
+                continue;
+            }
+            if ($status === 'Completado') {
+                $statusSummary['completado']++;
+                continue;
+            }
+            if ($status === 'En espera') {
+                $statusSummary['espera']++;
+                continue;
+            }
+            $statusSummary['enCurso']++;
+        }
+
         return [
-            'projects' => array_map(fn (array $board): array => $this->mapBoardToProjectCard($board, $latestSync), $this->metrics->getBoardBreakdown($userId, 100)),
+            'projects' => $projects,
+            'summary' => [
+                'projects' => count($projects),
+                'workspaces' => count($workspaces),
+                'tasksTotal' => (int)($summary['total_tasks'] ?? 0),
+                'tasksDone' => (int)($summary['completed_tasks'] ?? 0),
+                'tasksPending' => (int)($summary['pending_tasks'] ?? 0),
+                'tasksOverdue' => (int)($summary['overdue_tasks'] ?? 0),
+                'progress' => (int)round((float)($summary['progress_percentage'] ?? 0.0)),
+                'lastSync' => (string)($latestSync['finished_at'] ?? $latestSync['started_at'] ?? ''),
+            ],
+            'statusSummary' => $statusSummary,
         ];
     }
 
@@ -110,8 +147,25 @@ final class MonitoringService implements IMonitoringService
 
     public function getAnalyticsData(string $userId): array
     {
+        $summary = $this->metrics->getSummary($userId);
         $boards = $this->metrics->getBoardBreakdown($userId, 100);
         $workspaces = $this->metrics->getWorkspaceBreakdown($userId, 20);
+        $topProject = $boards[0] ?? null;
+        if ($topProject !== null) {
+            foreach ($boards as $board) {
+                if ((float)($board['progress_percentage'] ?? 0.0) > (float)($topProject['progress_percentage'] ?? 0.0)) {
+                    $topProject = $board;
+                }
+            }
+        }
+        $topTeam = $workspaces[0] ?? null;
+        if ($topTeam !== null) {
+            foreach ($workspaces as $workspace) {
+                if ((float)($workspace['progress_percentage'] ?? 0.0) > (float)($topTeam['progress_percentage'] ?? 0.0)) {
+                    $topTeam = $workspace;
+                }
+            }
+        }
 
         return [
             'projects' => array_map(fn (array $board): array => [
@@ -134,6 +188,19 @@ final class MonitoringService implements IMonitoringService
                     (int)$workspace['overdue_tasks']
                 ),
             ], $workspaces),
+            'summary' => [
+                'projectCount' => count($boards),
+                'teamCount' => count($workspaces),
+                'totalTasks' => (int)($summary['total_tasks'] ?? 0),
+                'completedTasks' => (int)($summary['completed_tasks'] ?? 0),
+                'pendingTasks' => (int)($summary['pending_tasks'] ?? 0),
+                'overdueTasks' => (int)($summary['overdue_tasks'] ?? 0),
+                'progress' => (int)round((float)($summary['progress_percentage'] ?? 0.0)),
+                'topProject' => $topProject === null ? '' : (string)($topProject['name'] ?? ''),
+                'topProjectProgress' => $topProject === null ? 0 : (int)round((float)($topProject['progress_percentage'] ?? 0.0)),
+                'topTeam' => $topTeam === null ? '' : (string)($topTeam['name'] ?? ''),
+                'topTeamProgress' => $topTeam === null ? 0 : (int)round((float)($topTeam['progress_percentage'] ?? 0.0)),
+            ],
         ];
     }
 
