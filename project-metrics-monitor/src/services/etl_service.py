@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from src.models.entities import EtlResult, ExtractedBundle, RepositoryPayload
@@ -47,7 +47,9 @@ class ETLService:
             )
             repo_payload = self._extract_repository(owner, repo, effective_since)
             repositories[repo] = repo_payload
-        dataset = self.dataset_builder.build(ExtractedBundle(owner=owner, repositories=repositories))
+        dataset = self.dataset_builder.build(
+            ExtractedBundle(owner=owner, repositories=repositories)
+        )
         table_counts = {name: int(frame.shape[0]) for name, frame in dataset.items()}
         loaded_at = utc_now_iso()
         if not dry_run:
@@ -56,7 +58,9 @@ class ETLService:
                 self.control_repository.update_last_loaded_at(f"github:{owner}/{repo}", loaded_at)
             self.export_service.export_all(export_csv=export_csv, export_parquet=export_parquet)
             if public_export:
-                self.export_service.export_public(export_csv=export_csv, export_parquet=export_parquet)
+                self.export_service.export_public(
+                    export_csv=export_csv, export_parquet=export_parquet
+                )
         return EtlResult(loaded_at=loaded_at, table_counts=table_counts, dry_run=dry_run)
 
     def _resolve_incremental_since(self, source_name: str, cli_since_dt: datetime) -> str:
@@ -72,23 +76,36 @@ class ETLService:
         dt = parse_iso_datetime(value)
         if dt is not None:
             return dt
-        return parse_iso_date(value).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+        return parse_iso_date(value).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC)
 
     def _extract_repository(self, owner: str, repo: str, since_iso: str) -> RepositoryPayload:
         repo_data = self.github_client.get_repository(owner, repo)
-        commits = self._safe_call("commits", owner, repo, lambda: self.github_client.get_commits(owner, repo, since_iso))
-        pull_requests = self._safe_call(
-            "pull_requests", owner, repo, lambda: self.github_client.get_pull_requests(owner, repo, since_iso)
+        commits = self._safe_call(
+            "commits", owner, repo, lambda: self.github_client.get_commits(owner, repo, since_iso)
         )
-        issues = self._safe_call("issues", owner, repo, lambda: self.github_client.get_issues(owner, repo, since_iso))
+        pull_requests = self._safe_call(
+            "pull_requests",
+            owner,
+            repo,
+            lambda: self.github_client.get_pull_requests(owner, repo, since_iso),
+        )
+        issues = self._safe_call(
+            "issues", owner, repo, lambda: self.github_client.get_issues(owner, repo, since_iso)
+        )
         releases = self._safe_call(
             "releases", owner, repo, lambda: self.github_client.get_releases(owner, repo, since_iso)
         )
         workflow_runs = self._safe_call(
-            "workflow_runs", owner, repo, lambda: self.github_client.get_workflow_runs(owner, repo, since_iso)
+            "workflow_runs",
+            owner,
+            repo,
+            lambda: self.github_client.get_workflow_runs(owner, repo, since_iso),
         )
         contributors = self._safe_call(
-            "contributors", owner, repo, lambda: self.github_client.get_contributors(owner, repo, since_iso)
+            "contributors",
+            owner,
+            repo,
+            lambda: self.github_client.get_contributors(owner, repo, since_iso),
         )
         return RepositoryPayload(
             repo=repo_data,

@@ -14,7 +14,7 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
         }
         if hasattr(record, "extra_fields"):
-            payload.update(getattr(record, "extra_fields"))
+            payload.update(record.extra_fields)
         return json.dumps(payload, ensure_ascii=True)
 
 

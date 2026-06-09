@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
@@ -39,7 +39,7 @@ class DatasetBuilder:
         issue_label_rows: list[dict[str, Any]] = []
         pr_label_rows: list[dict[str, Any]] = []
         date_values: dict[int, datetime] = {}
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
 
         for repo_name, payload in bundle.repositories.items():
             repo = payload.repo
@@ -109,7 +109,9 @@ class DatasetBuilder:
                     lead_time_hours = round((merged_at - created_at).total_seconds() / 3600, 2)
                 review_time_hours = None
                 if created_at and first_review_at:
-                    review_time_hours = round((first_review_at - created_at).total_seconds() / 3600, 2)
+                    review_time_hours = round(
+                        (first_review_at - created_at).total_seconds() / 3600, 2
+                    )
                 pr_rows.append(
                     {
                         "pr_id": pr["id"],
@@ -154,7 +156,9 @@ class DatasetBuilder:
                 if created_at and not closed_at:
                     current_age_hours = round((now_utc - created_at).total_seconds() / 3600, 2)
                 issue_labels = issue.get("labels", {}).get("nodes", [])
-                is_bug = any(label["name"].lower() in {"bug", "type: bug"} for label in issue_labels)
+                is_bug = any(
+                    label["name"].lower() in {"bug", "type: bug"} for label in issue_labels
+                )
                 issue_rows.append(
                     {
                         "issue_id": issue["id"],

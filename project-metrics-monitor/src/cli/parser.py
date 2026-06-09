@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 
 def build_parser() -> argparse.ArgumentParser:
-    default_since = (datetime.now(timezone.utc) - timedelta(days=30)).date().isoformat()
+    default_since = (datetime.now(UTC) - timedelta(days=30)).date().isoformat()
     parser = argparse.ArgumentParser(
         prog="python -m src.run",
         description="Monitor de Metricas de Proyectos - ETL GitHub a SQLite para Power BI",
@@ -19,12 +19,20 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--since",
         default=default_since,
-        help="Fecha o timestamp ISO-8601 para extraccion incremental. Ejemplo: 2026-01-01 o 2026-01-01T00:00:00Z",
+        help=(
+            "Fecha o timestamp ISO-8601 para extraccion incremental. "
+            "Ejemplo: 2026-01-01 o 2026-01-01T00:00:00Z"
+        ),
     )
     parser.add_argument(
         "--db-path",
         default="database/project_metrics.db",
         help="Ruta del archivo SQLite destino.",
+    )
+    parser.add_argument(
+        "--export-dir",
+        default="exports",
+        help="Directorio donde se guardan las exportaciones CSV y Parquet.",
     )
     parser.add_argument("--dry-run", action="store_true", help="Ejecuta sin persistir datos.")
     parser.add_argument(

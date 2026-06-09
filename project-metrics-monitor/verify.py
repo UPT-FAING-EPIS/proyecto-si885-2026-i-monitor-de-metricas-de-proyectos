@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import closing
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 from src.extract.github_client import GitHubClient
@@ -74,7 +74,12 @@ class OfflineSampleGitHubClient:
                 },
                 "labels": {
                     "nodes": [
-                        {"id": "label:enhancement", "name": "enhancement", "color": "a2eeef", "description": "Feature"}
+                        {
+                            "id": "label:enhancement",
+                            "name": "enhancement",
+                            "color": "a2eeef",
+                            "description": "Feature",
+                        }
                     ]
                 },
             }
@@ -143,7 +148,11 @@ def build_service(project_root: Path, db_path: Path, use_offline_sample: bool) -
         views_path=project_root / "database" / "views.sql",
         seed_path=project_root / "database" / "seed.sql",
     )
-    client = OfflineSampleGitHubClient() if use_offline_sample else GitHubClient(token=None, logger=logger)
+    client = (
+        OfflineSampleGitHubClient()
+        if use_offline_sample
+        else GitHubClient(token=None, logger=logger)
+    )
     return ETLService(
         github_client=client,
         dataset_builder=DatasetBuilder(),
@@ -179,7 +188,9 @@ def print_table_counts(db_path: Path) -> None:
 
 def run_validation_queries(db_path: Path) -> None:
     validations = {
-        "Repositorios resumen": "SELECT repo_name, commits, prs_merged, issues_closed, releases FROM vw_repo_summary",
+        "Repositorios resumen": (
+            "SELECT repo_name, commits, prs_merged, issues_closed, releases " "FROM vw_repo_summary"
+        ),
         "Throughput semanal": "SELECT repo_name, year_week, throughput_total FROM vw_throughput",
         "Calidad": "SELECT repo_name, bug_ratio, workflow_failure_rate FROM vw_quality_metrics",
     }
@@ -220,7 +231,9 @@ def verify_referential_integrity(db_path: Path) -> None:
 
 def main() -> None:
     project_root = Path(__file__).resolve().parent
-    parser = argparse.ArgumentParser(description="Verificacion integral del Monitor de Metricas de Proyectos")
+    parser = argparse.ArgumentParser(
+        description="Verificacion integral del Monitor de Metricas de Proyectos"
+    )
     parser.add_argument("--db-path", default="database/verify_project_metrics.db")
     parser.add_argument("--owner", default="sample-org")
     parser.add_argument("--repos", default="sample-repo")

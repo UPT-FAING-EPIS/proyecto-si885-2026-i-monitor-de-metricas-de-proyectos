@@ -52,11 +52,24 @@ def build_bundle() -> ExtractedBundle:
                                 {
                                     "state": "CHANGES_REQUESTED",
                                     "submittedAt": "2026-01-11T11:00:00Z",
-                                    "author": {"id": "user:carol", "login": "carol", "name": "Carol"},
+                                    "author": {
+                                        "id": "user:carol",
+                                        "login": "carol",
+                                        "name": "Carol",
+                                    },
                                 }
                             ]
                         },
-                        "labels": {"nodes": [{"id": "label:enhancement", "name": "enhancement", "color": "fff", "description": "Enhancement"}]},
+                        "labels": {
+                            "nodes": [
+                                {
+                                    "id": "label:enhancement",
+                                    "name": "enhancement",
+                                    "color": "fff",
+                                    "description": "Enhancement",
+                                }
+                            ]
+                        },
                     }
                 ],
                 issues=[
@@ -67,7 +80,16 @@ def build_bundle() -> ExtractedBundle:
                         "createdAt": "2026-01-13T08:00:00Z",
                         "closedAt": None,
                         "author": {"id": "user:alice", "login": "alice", "name": "Alice"},
-                        "labels": {"nodes": [{"id": "label:bug", "name": "bug", "color": "red", "description": "Bug"}]},
+                        "labels": {
+                            "nodes": [
+                                {
+                                    "id": "label:bug",
+                                    "name": "bug",
+                                    "color": "red",
+                                    "description": "Bug",
+                                }
+                            ]
+                        },
                     }
                 ],
                 releases=[

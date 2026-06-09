@@ -12,6 +12,12 @@ El repositorio construye un flujo reproducible para analizar salud, actividad, f
 - Exportaciones a CSV y Parquet
 - Consumo en Power BI Desktop y Power BI Service
 
+## Guia de produccion
+
+Para preparacion operativa paso a paso desde cero, usa:
+
+- `docs/production_runbook.md`
+
 ## Arquitectura
 
 Se aplica una Clean Architecture ligera con separacion por capas:
@@ -182,6 +188,7 @@ python -m venv .venv
 .venv\Scripts\activate
 python -m pip install --upgrade pip
 pip install -r requirements.txt
+pip install ".[dev]"
 ```
 
 ## Configuracion
@@ -193,6 +200,11 @@ Crear archivo `.env` a partir de `.env.example`:
 ```env
 GITHUB_TOKEN=tu_token_personal
 ```
+
+Nota:
+
+- `.env` se usa solo para `GITHUB_TOKEN`
+- `GITHUB_OWNER`, `GITHUB_REPOS`, `ETL_SINCE`, `DB_PATH` y `EXPORT_DIR` se definen por CLI, GitHub Actions o Render
 
 ### Reglas de seguridad
 
@@ -213,6 +225,7 @@ python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01
 ### Opciones disponibles
 
 - `--db-path`: cambia la ruta del SQLite
+- `--export-dir`: cambia la carpeta de exportaciones
 - `--dry-run`: ejecuta extraccion y transformacion sin persistir
 - `--no-token`: ignora `GITHUB_TOKEN`
 - `--export-csv`: exporta tablas y vistas a CSV
@@ -222,11 +235,11 @@ python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01
 ### Ejemplos
 
 ```bash
-python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01 --export-csv --export-parquet
-python -m src.run --owner microsoft --repos vscode --since 2026-01-01 --db-path database\custom_metrics.db
+python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01 --db-path database\project_metrics.db --export-dir exports --export-csv --export-parquet
+python -m src.run --owner microsoft --repos vscode --since 2026-01-01 --db-path database\custom_metrics.db --export-dir exports\custom
 python -m src.run --owner microsoft --repos terminal --since 2026-01-01 --dry-run
 python -m src.run --owner microsoft --repos terminal --since 2026-01-01 --no-token
-python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01T00:00:00Z --export-csv --public-export
+python -m src.run --owner microsoft --repos vscode,terminal --since 2026-01-01T00:00:00Z --db-path database\project_metrics.db --export-dir exports --export-csv --public-export
 ```
 
 ## Ejecucion incremental
@@ -322,6 +335,11 @@ Workflow incluido en `.github/workflows/ci.yml` con:
 - Black
 - Pytest con cobertura
 - Validacion ETL offline mediante `verify.py --offline-sample`
+
+Despliegue Render recomendado:
+
+- worker con disco persistente definido en `render.yaml`
+- guia completa en `docs/production_runbook.md`
 
 ## Power BI
 

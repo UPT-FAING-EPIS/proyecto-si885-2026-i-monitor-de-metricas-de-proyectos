@@ -43,7 +43,9 @@ def test_etl_service_persists_and_exports(tmp_path: Path) -> None:
         public_export=True,
     )
 
-    etl_control_total = int(loader.fetch_dataframe("SELECT COUNT(*) AS total FROM etl_control").iloc[0]["total"])
+    etl_control_total = int(
+        loader.fetch_dataframe("SELECT COUNT(*) AS total FROM etl_control").iloc[0]["total"]
+    )
     assert result.dry_run is False
     assert etl_control_total == 1
     assert (tmp_path / "exports" / "vw_repo_summary.csv").exists()
@@ -62,6 +64,8 @@ def test_etl_service_dry_run_skips_persistence(tmp_path: Path) -> None:
         public_export=False,
     )
 
-    etl_control_total = int(loader.fetch_dataframe("SELECT COUNT(*) AS total FROM etl_control").iloc[0]["total"])
+    etl_control_total = int(
+        loader.fetch_dataframe("SELECT COUNT(*) AS total FROM etl_control").iloc[0]["total"]
+    )
     assert result.dry_run is True
     assert etl_control_total == 0

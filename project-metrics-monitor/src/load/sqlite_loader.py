@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from contextlib import closing
 import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import pandas as pd
@@ -27,7 +27,9 @@ class SQLiteLoader:
             connection.executescript(self.views_path.read_text(encoding="utf-8"))
             connection.commit()
 
-    def upsert_dataframe(self, connection: sqlite3.Connection, table_name: str, df: pd.DataFrame) -> None:
+    def upsert_dataframe(
+        self, connection: sqlite3.Connection, table_name: str, df: pd.DataFrame
+    ) -> None:
         if df.empty:
             return
         columns = list(df.columns)
@@ -36,7 +38,10 @@ class SQLiteLoader:
         INSERT OR REPLACE INTO {table_name} ({", ".join(columns)})
         VALUES ({placeholders})
         """
-        rows = [tuple(None if pd.isna(value) else value for value in row) for row in df.itertuples(index=False)]
+        rows = [
+            tuple(None if pd.isna(value) else value for value in row)
+            for row in df.itertuples(index=False)
+        ]
         connection.executemany(sql, rows)
 
     def load_dataset(self, dataset: dict[str, pd.DataFrame]) -> None:
@@ -56,7 +61,9 @@ class SQLiteLoader:
         ]
         with closing(self.connect()) as connection:
             for table_name in load_order:
-                self.upsert_dataframe(connection, table_name, dataset.get(table_name, pd.DataFrame()))
+                self.upsert_dataframe(
+                    connection, table_name, dataset.get(table_name, pd.DataFrame())
+                )
             connection.commit()
 
     def fetch_dataframe(self, sql: str) -> pd.DataFrame:

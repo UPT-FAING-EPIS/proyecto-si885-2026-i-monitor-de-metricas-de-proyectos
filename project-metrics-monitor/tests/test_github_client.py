@@ -9,7 +9,9 @@ from src.extract.github_client import GitHubClient
 
 
 class FakeResponse:
-    def __init__(self, status_code: int, payload: Any, headers: dict[str, str] | None = None) -> None:
+    def __init__(
+        self, status_code: int, payload: Any, headers: dict[str, str] | None = None
+    ) -> None:
         self.status_code = status_code
         self._payload = payload
         self.headers = headers or {}
@@ -54,7 +56,13 @@ def test_rest_paginated_collects_multiple_pages(monkeypatch: pytest.MonkeyPatch)
         FakeResponse(200, [{"id": 2}]),
     ]
 
-    def fake_request(method: str, url: str, params: dict[str, Any] | None = None, json: Any = None, timeout: int = 60) -> FakeResponse:
+    def fake_request(
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        timeout: int = 60,
+    ) -> FakeResponse:
         return responses.pop(0)
 
     monkeypatch.setattr(client.session, "request", fake_request)
@@ -67,10 +75,14 @@ def test_request_honors_rate_limit_reset(monkeypatch: pytest.MonkeyPatch) -> Non
     sleeper = RecordingSleeper()
     import datetime as dt
 
-    now_epoch = int(dt.datetime.now(dt.timezone.utc).timestamp())
+    now_epoch = int(dt.datetime.now(dt.UTC).timestamp())
     reset_epoch = now_epoch + 1
     responses = [
-        FakeResponse(403, {"message": "rate limit"}, headers={"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": str(reset_epoch)}),
+        FakeResponse(
+            403,
+            {"message": "rate limit"},
+            headers={"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": str(reset_epoch)},
+        ),
         FakeResponse(200, {"ok": True}),
     ]
 
@@ -142,11 +154,21 @@ def test_pull_requests_rest_fallback_normalizes(monkeypatch: pytest.MonkeyPatch)
             yield {"name": "bug", "color": "d73a4a", "description": "Bug"}
             return
         if endpoint.endswith("/pulls/7/reviews"):
-            yield {"state": "CHANGES_REQUESTED", "submitted_at": "2026-01-02T01:00:00Z", "user": {"login": "rev"}}
+            yield {
+                "state": "CHANGES_REQUESTED",
+                "submitted_at": "2026-01-02T01:00:00Z",
+                "user": {"login": "rev"},
+            }
             return
         return
 
-    def fake_request(method: str, url: str, params: dict[str, Any] | None = None, json: Any = None, timeout: int = 60):
+    def fake_request(
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        timeout: int = 60,
+    ):
         if url.endswith("/pulls/7"):
             return FakeResponse(
                 200,
@@ -233,7 +255,13 @@ def test_contributors_rest_normalizes(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_contributors_graphql_aggregates(monkeypatch: pytest.MonkeyPatch) -> None:
     client = GitHubClient(token="token")
 
-    def fake_request(method: str, url: str, params: dict[str, Any] | None = None, json: Any = None, timeout: int = 60):
+    def fake_request(
+        method: str,
+        url: str,
+        params: dict[str, Any] | None = None,
+        json: Any = None,
+        timeout: int = 60,
+    ):
         return FakeResponse(
             200,
             {
@@ -246,11 +274,23 @@ def test_contributors_graphql_aggregates(monkeypatch: pytest.MonkeyPatch) -> Non
                                     "nodes": [
                                         {
                                             "committedDate": "2026-01-02T00:00:01Z",
-                                            "author": {"user": {"id": "U1", "login": "alice", "name": "Alice"}},
+                                            "author": {
+                                                "user": {
+                                                    "id": "U1",
+                                                    "login": "alice",
+                                                    "name": "Alice",
+                                                }
+                                            },
                                         },
                                         {
                                             "committedDate": "2026-01-02T00:00:02Z",
-                                            "author": {"user": {"id": "U1", "login": "alice", "name": "Alice"}},
+                                            "author": {
+                                                "user": {
+                                                    "id": "U1",
+                                                    "login": "alice",
+                                                    "name": "Alice",
+                                                }
+                                            },
                                         },
                                     ],
                                 }

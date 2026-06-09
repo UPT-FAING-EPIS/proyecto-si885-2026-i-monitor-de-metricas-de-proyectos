@@ -18,6 +18,7 @@ def test_load_dotenv_and_build_settings(tmp_path: Path, monkeypatch: pytest.Monk
         repos="vscode,terminal",
         since="2026-01-01",
         db_path="database/project_metrics.db",
+        export_dir="exports",
         dry_run=False,
         no_token=False,
         export_csv=True,
@@ -33,6 +34,7 @@ def test_load_dotenv_and_build_settings(tmp_path: Path, monkeypatch: pytest.Monk
     assert settings.export_csv is True
     assert settings.export_parquet is True
     assert settings.db_path.name == "project_metrics.db"
+    assert settings.export_dir.name == "exports"
 
 
 def test_build_settings_without_token_when_no_token_flag(tmp_path: Path) -> None:
@@ -41,6 +43,7 @@ def test_build_settings_without_token_when_no_token_flag(tmp_path: Path) -> None
         repos="vscode",
         since="2026-01-01",
         db_path="database/project_metrics.db",
+        export_dir="exports",
         dry_run=True,
         no_token=True,
         export_csv=False,

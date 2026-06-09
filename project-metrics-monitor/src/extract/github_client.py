@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import time
 from collections.abc import Iterator
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import requests
@@ -59,7 +59,10 @@ class GitHubClient:
                 if response.status_code in {429, 502, 503, 504}:
                     self._backoff_sleep(attempt, response)
                     continue
-                if response.status_code == 403 and response.headers.get("X-RateLimit-Remaining") == "0":
+                if (
+                    response.status_code == 403
+                    and response.headers.get("X-RateLimit-Remaining") == "0"
+                ):
                     self._sleep_for_rate_limit(response)
                     continue
                 response.raise_for_status()
@@ -84,7 +87,7 @@ class GitHubClient:
         wait_seconds = 60
         if reset_at:
             reset_epoch = int(reset_at)
-            wait_seconds = max(reset_epoch - int(datetime.now(timezone.utc).timestamp()) + 1, 1)
+            wait_seconds = max(reset_epoch - int(datetime.now(UTC).timestamp()) + 1, 1)
         self.logger.warning(
             "github_rate_limit_wait",
             extra={"extra_fields": {"wait_seconds": wait_seconds}},
@@ -98,12 +101,13 @@ class GitHubClient:
         base_params = dict(params or {})
         while True:
             current_params = {**base_params, "per_page": 100, "page": page}
-            response = self._request("GET", f"{self.rest_base_url}{endpoint}", params=current_params)
+            response = self._request(
+                "GET", f"{self.rest_base_url}{endpoint}", params=current_params
+            )
             items = response.json()
             if not items:
                 break
-            for item in items:
-                yield item
+            yield from items
             if len(items) < 100:
                 break
             page += 1
@@ -111,7 +115,9 @@ class GitHubClient:
     def _graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
         if not self.token:
             raise RuntimeError("GraphQL requiere autenticacion (GITHUB_TOKEN).")
-        response = self._request("POST", self.graphql_url, json_body={"query": query, "variables": variables})
+        response = self._request(
+            "POST", self.graphql_url, json_body={"query": query, "variables": variables}
+        )
         payload = response.json()
         if payload.get("errors"):
             raise RuntimeError(f"GraphQL errors: {payload['errors']}")
@@ -122,7 +128,7 @@ class GitHubClient:
         dt = parse_iso_datetime(value)
         if dt is not None:
             return dt
-        return parse_iso_date(value).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+        return parse_iso_date(value).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=UTC)
 
     def _warn_no_token(self, capability: str, owner: str, repo: str) -> None:
         self.logger.warning(
@@ -349,7 +355,11 @@ class GitHubClient:
                 if not user.get("login"):
                     continue
                 login = user.get("login")
-                author = {"id": user.get("id") or f"user:{login.lower()}", "login": login, "name": user.get("name")}
+                author = {
+                    "id": user.get("id") or f"user:{login.lower()}",
+                    "login": login,
+                    "name": user.get("name"),
+                }
                 key = author["id"]
                 if key not in aggregates:
                     aggregates[key] = {
@@ -385,13 +395,11 @@ class GitHubClient:
             if not updated_at or updated_at <= threshold:
                 continue
             number = int(item["number"])
-            detail = self._request("GET", f"{self.rest_base_url}/repos/{owner}/{repo}/pulls/{number}").json()
-            labels = list(
-                self._rest_paginated(f"/repos/{owner}/{repo}/issues/{number}/labels")
-            )
-            reviews = list(
-                self._rest_paginated(f"/repos/{owner}/{repo}/pulls/{number}/reviews")
-            )
+            detail = self._request(
+                "GET", f"{self.rest_base_url}/repos/{owner}/{repo}/pulls/{number}"
+            ).json()
+            labels = list(self._rest_paginated(f"/repos/{owner}/{repo}/issues/{number}/labels"))
+            reviews = list(self._rest_paginated(f"/repos/{owner}/{repo}/pulls/{number}/reviews"))
             results.append(self._normalize_pr_rest(detail, labels, reviews))
         return results
 
@@ -413,17 +421,21 @@ class GitHubClient:
                 {
                     "state": (r.get("state") or "").upper(),
                     "submittedAt": r.get("submitted_at"),
-                    "author": {"id": f"user:{reviewer_login.lower()}", "login": reviewer_login, "name": reviewer_login},
+                    "author": {
+                        "id": f"user:{reviewer_login.lower()}",
+                        "login": reviewer_login,
+                        "name": reviewer_login,
+                    },
                 }
             )
         normalized_labels = [
             {
-                "id": f"label:{(l.get('name') or 'unknown')}",
-                "name": l.get("name") or "unknown",
-                "color": l.get("color"),
-                "description": l.get("description"),
+                "id": f"label:{(label.get('name') or 'unknown')}",
+                "name": label.get("name") or "unknown",
+                "color": label.get("color"),
+                "description": label.get("description"),
             }
-            for l in labels
+            for label in labels
         ]
         return {
             "id": pr.get("node_id") or f"PR:{pr.get('id')}",
@@ -449,7 +461,12 @@ class GitHubClient:
         items = list(
             self._rest_paginated(
                 endpoint,
-                params={"state": "all", "sort": "updated", "direction": "desc", "since": to_iso(threshold)},
+                params={
+                    "state": "all",
+                    "sort": "updated",
+                    "direction": "desc",
+                    "since": to_iso(threshold),
+                },
             )
         )
         results: list[dict[str, Any]] = []
@@ -463,13 +480,13 @@ class GitHubClient:
             labels = item.get("labels") or []
             normalized_labels = [
                 {
-                    "id": f"label:{(l.get('name') or 'unknown')}",
-                    "name": l.get("name") or "unknown",
-                    "color": l.get("color"),
-                    "description": l.get("description"),
+                    "id": f"label:{(label.get('name') or 'unknown')}",
+                    "name": label.get("name") or "unknown",
+                    "color": label.get("color"),
+                    "description": label.get("description"),
                 }
-                for l in labels
-                if isinstance(l, dict)
+                for label in labels
+                if isinstance(label, dict)
             ]
             results.append(
                 {
@@ -480,7 +497,11 @@ class GitHubClient:
                     "createdAt": item.get("created_at"),
                     "updatedAt": item.get("updated_at"),
                     "closedAt": item.get("closed_at"),
-                    "author": {"id": f"user:{author_login.lower()}", "login": author_login, "name": author_login},
+                    "author": {
+                        "id": f"user:{author_login.lower()}",
+                        "login": author_login,
+                        "name": author_login,
+                    },
                     "labels": {"nodes": normalized_labels},
                 }
             )

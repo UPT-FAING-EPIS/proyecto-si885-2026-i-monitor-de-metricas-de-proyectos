@@ -20,7 +20,11 @@ def test_sqlite_loader_initializes_and_loads_dataset(tmp_path: Path) -> None:
     loader.initialize()
     loader.load_dataset(DatasetBuilder().build(build_bundle()))
 
-    repo_count = int(loader.fetch_dataframe("SELECT COUNT(*) AS total FROM dim_repo").iloc[0]["total"])
-    throughput_count = int(loader.fetch_dataframe("SELECT COUNT(*) AS total FROM vw_throughput").iloc[0]["total"])
+    repo_count = int(
+        loader.fetch_dataframe("SELECT COUNT(*) AS total FROM dim_repo").iloc[0]["total"]
+    )
+    throughput_count = int(
+        loader.fetch_dataframe("SELECT COUNT(*) AS total FROM vw_throughput").iloc[0]["total"]
+    )
     assert repo_count == 1
     assert throughput_count >= 1

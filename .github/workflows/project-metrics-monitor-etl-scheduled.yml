@@ -1,4 +1,4 @@
-name: etl-scheduled
+name: project-metrics-monitor-etl-scheduled
 
 on:
   schedule:
@@ -23,11 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    defaults:
+      run:
+        working-directory: project-metrics-monitor
     env:
       GITHUB_OWNER: ${{ github.event.inputs.owner || vars.PMM_OWNER || vars.GITHUB_OWNER || 'microsoft' }}
       GITHUB_REPOS: ${{ github.event.inputs.repos || vars.PMM_REPOS || vars.GITHUB_REPOS || 'vscode' }}
       ETL_SINCE: ${{ github.event.inputs.since || vars.PMM_ETL_SINCE || vars.ETL_SINCE || '2026-01-01T00:00:00Z' }}
-      DB_PATH: database/project_metrics_ci.db
+      DB_PATH: project-metrics-monitor/database/project_metrics_ci.db
       GITHUB_TOKEN: ${{ secrets.PMM_GH_TOKEN }}
     steps:
       - name: Checkout
@@ -64,10 +67,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: project-metrics-db
-          path: database/*.db
+          path: project-metrics-monitor/database/*.db
 
       - name: Upload export artifact
         uses: actions/upload-artifact@v4
         with:
           name: project-metrics-exports
-          path: exports/**
+          path: project-metrics-monitor/exports/**

@@ -41,7 +41,7 @@ def build_settings(args: argparse.Namespace, project_root: Path) -> Settings:
         repos=validate_repos(args.repos),
         since=validate_since(args.since),
         db_path=(project_root / args.db_path).resolve(),
-        export_dir=(project_root / "exports").resolve(),
+        export_dir=(project_root / args.export_dir).resolve(),
         github_token=token,
         dry_run=bool(args.dry_run),
         export_csv=bool(args.export_csv),
