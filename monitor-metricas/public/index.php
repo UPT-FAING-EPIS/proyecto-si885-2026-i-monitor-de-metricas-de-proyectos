@@ -153,6 +153,17 @@ $renderTrelloBootstrapError = static function (string $message, array $diagnosti
     exit;
 };
 
+$renderDashboardBootstrapError = static function (string $message, array $diagnostics = []): void {
+    http_response_code(200);
+    header('Content-Type: text/html; charset=utf-8');
+    $safe = htmlspecialchars($message, ENT_QUOTES, 'UTF-8');
+    $pretty = htmlspecialchars(json_encode($diagnostics, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '{}', ENT_QUOTES, 'UTF-8');
+    echo '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dashboard no disponible</title>';
+    echo '<style>body{font-family:Arial,sans-serif;background:#f8fafc;color:#0f172a;margin:0;padding:32px}.card{max-width:920px;margin:40px auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 10px 30px rgba(2,6,23,.08)}h1{margin:0 0 12px;font-size:24px}p{line-height:1.6}a{color:#155fe0;text-decoration:none}.muted{color:#475569;font-size:14px}pre{white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#e2e8f0;padding:16px;border-radius:12px;overflow:auto;font-size:12px}</style>';
+    echo '</head><body><div class="card"><h1>Dashboard no pudo inicializarse</h1><p>' . $safe . '</p><p class="muted">Comparte este diagnóstico para identificar si falta una migración, una dependencia del contenedor o una consulta SQL.</p><h2>Diagnostico</h2><pre>' . $pretty . '</pre><p><a href="/login">Volver al inicio</a></p></div></body></html>';
+    exit;
+};
+
 $router->get('/', static function (\App\Core\Request $req, \App\Core\Response $res): void {
     $res->redirect('/dashboard');
 });
@@ -163,8 +174,17 @@ $router->get('/register', [new \App\Controllers\AuthController(), 'showRegister'
 $router->post('/register', [new \App\Controllers\AuthController(), 'register']);
 $router->post('/logout', [new \App\Controllers\AuthController(), 'logout']);
 
-$router->get('/dashboard', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
-    $container->get(\App\Controllers\DashboardController::class)->index($req, $res);
+$router->get('/dashboard', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $collectTrelloDiagnostics, $renderDashboardBootstrapError): void {
+    try {
+        $container->get(\App\Controllers\DashboardController::class)->index($req, $res);
+    } catch (\Throwable $e) {
+        $diagnostics = $collectTrelloDiagnostics();
+        $diagnostics['session_user_id'] = (string)($_SESSION['user']['id'] ?? '');
+        $diagnostics['route'] = '/dashboard';
+        $diagnostics['error_message'] = $e->getMessage();
+        error_log('Dashboard route init error: ' . json_encode($diagnostics, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        $renderDashboardBootstrapError('Ocurrio un error al construir el dashboard con datos reales.', $diagnostics);
+    }
 });
 $router->get('/projects', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
     $container->get(\App\Controllers\ProjectsController::class)->index($req, $res);
