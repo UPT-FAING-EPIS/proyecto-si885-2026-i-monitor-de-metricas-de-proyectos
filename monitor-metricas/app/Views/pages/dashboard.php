@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-$kpis = [
+$kpis = $kpis ?? [
     [
         'label' => 'Proyectos Activos',
         'value' => 18,
@@ -39,8 +39,8 @@ $kpis = [
     ],
 ];
 
-$projectProgressSeries = [62, 64, 66, 65, 68, 71, 73, 75, 76, 78, 79, 81];
-$teams = [
+$projectProgressSeries = $projectProgressSeries ?? [62, 64, 66, 65, 68, 71, 73, 75, 76, 78, 79, 81];
+$teams = $teams ?? [
     ['name' => 'Producto', 'value' => 78],
     ['name' => 'Backend', 'value' => 66],
     ['name' => 'Frontend', 'value' => 72],
@@ -48,28 +48,28 @@ $teams = [
     ['name' => 'Data', 'value' => 64],
 ];
 
-$statusDistribution = [
+$statusDistribution = $statusDistribution ?? [
     ['label' => 'To Do', 'value' => 22, 'color' => 'bg-slate-400'],
     ['label' => 'In Progress', 'value' => 38, 'color' => 'bg-pm-500'],
     ['label' => 'Blocked', 'value' => 8, 'color' => 'bg-rose-500'],
     ['label' => 'Done', 'value' => 32, 'color' => 'bg-emerald-500'],
 ];
 
-$recentActivity = [
+$recentActivity = $recentActivity ?? [
     ['title' => 'Se actualizó el board “Q3 Roadmap”', 'meta' => 'hace 6 min · Producto', 'type' => 'sync'],
     ['title' => 'Alerta: aumento de tareas vencidas en “Release 2.4”', 'meta' => 'hace 24 min · Backend', 'type' => 'alert'],
     ['title' => 'Nuevo riesgo detectado: baja actividad en “Onboarding”', 'meta' => 'hace 1 h · PMO', 'type' => 'risk'],
     ['title' => 'Se completaron 14 tareas en “Customer Portal”', 'meta' => 'hace 3 h · Frontend', 'type' => 'done'],
 ];
 
-$topPerformance = [
+$topPerformance = $topPerformance ?? [
     ['name' => 'Customer Portal', 'owner' => 'María G.', 'progress' => 86, 'delta' => 8.2],
     ['name' => 'Q3 Roadmap', 'owner' => 'Equipo Producto', 'progress' => 81, 'delta' => 5.1],
     ['name' => 'Data Quality', 'owner' => 'Equipo Data', 'progress' => 79, 'delta' => 4.4],
     ['name' => 'FinOps Tracker', 'owner' => 'Carlos R.', 'progress' => 76, 'delta' => 3.7],
 ];
 
-$topRisk = [
+$topRisk = $topRisk ?? [
     ['name' => 'Release 2.4', 'owner' => 'Equipo Backend', 'risk' => 'Alto', 'overdue' => 21],
     ['name' => 'Onboarding', 'owner' => 'PMO', 'risk' => 'Medio', 'overdue' => 12],
     ['name' => 'Infra Upgrade', 'owner' => 'Plataforma', 'risk' => 'Medio', 'overdue' => 9],
@@ -97,7 +97,7 @@ function icon(string $name): string {
 
 $csrf = $_SESSION['csrf'] ?? '';
 
-$payload = [
+$payload = $payload ?? [
     'projectProgressSeries' => $projectProgressSeries,
     'teams' => $teams,
     'statusDistribution' => array_map(static fn ($s) => ['label' => $s['label'], 'value' => $s['value']], $statusDistribution),

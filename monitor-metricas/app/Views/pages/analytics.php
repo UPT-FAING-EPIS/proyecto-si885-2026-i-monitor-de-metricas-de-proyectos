@@ -19,7 +19,7 @@ function icon(string $name): string {
     return $icons[$name] ?? '';
 }
 
-$payload = [
+$payload = $payload ?? [
     'projects' => [
         ['id' => 'b1', 'name' => 'Customer Portal'],
         ['id' => 'b2', 'name' => 'Release 2.4'],

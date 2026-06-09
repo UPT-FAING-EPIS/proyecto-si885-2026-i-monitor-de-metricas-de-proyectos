@@ -38,6 +38,7 @@ final class TrelloController extends Controller
             ],
             'boards' => [],
             'latest_sync' => null,
+            'recent_logs' => [],
         ];
         $this->render('pages/trello', ['trelloStatus' => $status, 'trelloMetrics' => $metrics, 'csrf' => $_SESSION['csrf'] ?? '']);
     }

@@ -7,10 +7,10 @@ final class TrelloWorkspace
 {
     public function __construct(
         public readonly int $id,
+        public readonly string $userId,
         public readonly string $trelloWorkspaceId,
         public readonly string $name,
         public readonly ?string $description,
     ) {
     }
 }
-

@@ -57,22 +57,26 @@ final class TrelloSyncService implements ITrelloSyncService
     {
         $token = trim($token);
         if ($token === '') {
+            $this->logEvent('connect_failed', ['user_id' => $userId, 'reason' => 'empty_token']);
             throw new TrelloConnectionException('Token de Trello requerido.');
         }
 
         try {
             $member = $this->trello->getMember($token);
         } catch (TrelloApiException $e) {
+            $this->logEvent('connect_failed', ['user_id' => $userId, 'reason' => $e->getMessage()]);
             throw new TrelloConnectionException($e->getMessage());
         }
 
         $memberId = (string)($member['id'] ?? '');
         if ($memberId === '') {
+            $this->logEvent('connect_failed', ['user_id' => $userId, 'reason' => 'missing_member_id']);
             throw new TrelloConnectionException('No se pudo obtener el miembro de Trello.');
         }
 
         $enc = $this->crypto->encrypt($token);
         $this->connections->upsertConnected($userId, $memberId, $enc);
+        $this->logEvent('connect_success', ['user_id' => $userId, 'trello_member_id' => $memberId]);
 
         return ['connected' => true, 'trello_member_id' => $memberId];
     }
@@ -81,6 +85,7 @@ final class TrelloSyncService implements ITrelloSyncService
     {
         $empty = $this->crypto->encrypt('');
         $this->connections->markDisconnected($userId, $empty);
+        $this->logEvent('disconnect', ['user_id' => $userId]);
     }
 
     public function getMember(string $userId): array
@@ -184,6 +189,13 @@ final class TrelloSyncService implements ITrelloSyncService
     {
         $startedAt = new DateTimeImmutable('now');
         $logId = $this->logs->start($userId, $syncType);
+        $this->logEvent('sync_started', [
+            'user_id' => $userId,
+            'sync_type' => $syncType,
+            'workspace_id' => $workspaceTrelloId,
+            'board_id' => $boardTrelloId,
+            'log_id' => $logId,
+        ]);
 
         $boardsProcessed = 0;
         $listsProcessed = 0;
@@ -199,7 +211,7 @@ final class TrelloSyncService implements ITrelloSyncService
                     continue;
                 }
 
-                $workspaceId = $this->workspaces->upsert($ws);
+                $workspaceId = $this->workspaces->upsert($userId, $ws);
                 $boards = $this->trello->getBoards($token, $ws->trelloId);
                 $seenBoardIds = [];
                 foreach ($boards as $b) {
@@ -211,24 +223,24 @@ final class TrelloSyncService implements ITrelloSyncService
                         continue;
                     }
 
-                    $this->syncBoardData($token, $workspaceId, $board, $listsProcessed, $cardsProcessed);
+                    $this->syncBoardData($userId, $token, $workspaceId, $board, $listsProcessed, $cardsProcessed);
                     $boardsProcessed++;
                 }
 
                 if ($boardTrelloId === null) {
-                    $this->boards->markClosedNotIn($workspaceId, $seenBoardIds);
+                    $this->boards->markClosedNotIn($userId, $workspaceId, $seenBoardIds);
                 }
             }
         } catch (TrelloApiException $e) {
             $errors++;
-            error_log('Trello sync error user=' . $userId . ' type=' . $syncType . ' msg=' . $e->getMessage());
+            $this->logEvent('sync_failed', ['user_id' => $userId, 'sync_type' => $syncType, 'message' => $e->getMessage()]);
             if (in_array($e->status(), [401, 403], true)) {
                 throw new TrelloConnectionException('Trello: token inválido o sin permisos.');
             }
             throw new SynchronizationException($e->getMessage());
         } catch (Throwable $e) {
             $errors++;
-            error_log('Trello sync error user=' . $userId . ' type=' . $syncType . ' msg=' . $e->getMessage());
+            $this->logEvent('sync_failed', ['user_id' => $userId, 'sync_type' => $syncType, 'message' => $e->getMessage()]);
             throw new SynchronizationException($e->getMessage());
         } finally {
             $finishedAt = new DateTimeImmutable('now');
@@ -249,22 +261,22 @@ final class TrelloSyncService implements ITrelloSyncService
         ];
     }
 
-    private function syncBoardData(string $token, int $workspaceId, BoardDTO $board, int &$listsProcessed, int &$cardsProcessed): void
+    private function syncBoardData(string $userId, string $token, int $workspaceId, BoardDTO $board, int &$listsProcessed, int &$cardsProcessed): void
     {
         $this->pdo->beginTransaction();
         try {
-            $boardId = $this->boards->upsert($workspaceId, $board);
+            $boardId = $this->boards->upsert($userId, $workspaceId, $board);
 
             $lists = $this->trello->getLists($token, $board->trelloId);
             $listIdByTrello = [];
             $seenListIds = [];
             foreach ($lists as $listDto) {
-                $listId = $this->lists->upsert($boardId, $listDto);
+                $listId = $this->lists->upsert($userId, $boardId, $listDto);
                 $listIdByTrello[$listDto->trelloId] = $listId;
                 $seenListIds[] = $listDto->trelloId;
             }
             $listsProcessed += count($lists);
-            $this->lists->markClosedNotIn($boardId, $seenListIds);
+            $this->lists->markClosedNotIn($userId, $boardId, $seenListIds);
 
             $cards = $this->trello->getCards($token, $board->trelloId);
             $seenCardIds = [];
@@ -273,11 +285,11 @@ final class TrelloSyncService implements ITrelloSyncService
                 if (!is_int($listInternalId) || $listInternalId <= 0) {
                     continue;
                 }
-                $this->cards->upsert($boardId, $listInternalId, $cardDto);
+                $this->cards->upsert($userId, $boardId, $listInternalId, $cardDto);
                 $cardsProcessed++;
                 $seenCardIds[] = $cardDto->trelloId;
             }
-            $this->cards->markClosedNotIn($boardId, $seenCardIds);
+            $this->cards->markClosedNotIn($userId, $boardId, $seenCardIds);
 
             $this->pdo->commit();
         } catch (Throwable $e) {
@@ -306,5 +318,11 @@ final class TrelloSyncService implements ITrelloSyncService
         } catch (Throwable) {
             return '';
         }
+    }
+
+    /** @param array<string,mixed> $context */
+    private function logEvent(string $event, array $context = []): void
+    {
+        error_log('trello.' . $event . ' ' . json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 }

@@ -90,6 +90,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
       window.__PM.csrf = <?= json_encode((string)$csrf) ?>;
       window.__PM.trelloStatus = <?= json_encode($trelloStatus) ?>;
       window.__PM.trelloMetrics = <?= json_encode($trelloMetrics) ?>;
+      window.__PM.trelloAuthorizeUrl = <?= json_encode($trelloAuthorizeUrl) ?>;
     </script>
   </head>
   <body class="h-full bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
@@ -216,7 +217,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
           <div class="flex flex-wrap items-end justify-between gap-4">
             <div class="min-w-0">
               <h1 class="truncate text-xl font-semibold tracking-tight text-slate-900 dark:text-white">Integración con Trello</h1>
-              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Conecta tu cuenta para sincronizar boards y calcular métricas automáticamente.</p>
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">Autoriza tu cuenta en Trello para sincronizar boards y calcular métricas automáticamente.</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <span id="connectionPill" class="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800" role="status" aria-live="polite">
@@ -227,7 +228,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                 <span class="grid h-8 w-8 place-items-center rounded-lg bg-white/10" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><?= icon('link') ?></svg>
                 </span>
-                Conectar con Trello
+                Autorizar con Trello
               </button>
             </div>
           </div>
@@ -332,6 +333,11 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                     <div class="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 dark:bg-slate-950 dark:text-white">Boards con mayor carga</div>
                     <div id="boardMetrics" class="divide-y divide-slate-200 dark:divide-slate-800"></div>
                   </div>
+
+                  <div class="mt-4 overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div class="bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 dark:bg-slate-950 dark:text-white">Logs recientes de sincronización</div>
+                    <div id="recentLogs" class="divide-y divide-slate-200 dark:divide-slate-800"></div>
+                  </div>
                 </div>
               </div>
 
@@ -345,7 +351,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                         </span>
                         <div>
                           <p class="text-sm font-semibold text-slate-900 dark:text-white">No hay una cuenta conectada</p>
-                          <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Autoriza acceso a Trello para iniciar la sincronización.</p>
+                          <p class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Inicia la autorización oficial en Trello para iniciar la sincronización.</p>
                         </div>
                       </div>
                       <ul class="mt-4 grid gap-2 text-sm text-slate-600 dark:text-slate-300">
@@ -365,7 +371,7 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                     </div>
                     <button id="connectBtn" type="button" <?= $trelloError !== '' ? 'disabled' : '' ?> class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto dark:bg-pm-500 dark:hover:bg-pm-400">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><?= icon('link') ?></svg>
-                      Ingresar token
+                      Autorizar con Trello
                     </button>
                   </div>
 
@@ -373,23 +379,21 @@ if ($trelloApiKey !== '' && $appUrl !== '') {
                     <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div class="min-w-0">
                         <p class="text-sm font-semibold text-slate-900 dark:text-white">Conectar cuenta Trello</p>
-                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Autoriza acceso de lectura en Trello, copia el token generado y pégalo aquí para habilitar la sincronización de métricas, alertas y dashboards.</p>
+                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Se abrirá Trello en otra ventana para autorizar acceso de lectura. Al finalizar, la conexión quedará registrada automáticamente.</p>
                       </div>
-                      <?php if ($trelloAuthorizeUrl !== ''): ?>
-                        <a href="<?= h($trelloAuthorizeUrl) ?>" target="_blank" rel="noopener noreferrer" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Generar token en Trello</a>
-                      <?php endif; ?>
+                      <button id="authorizeTrelloBtn" type="button" <?= ($trelloAuthorizeUrl === '' || $trelloError !== '') ? 'disabled' : '' ?> class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">Abrir Trello</button>
                     </div>
 
                     <form id="connectForm" class="mt-4 grid gap-3">
                       <input type="hidden" name="csrf" value="<?= h((string)$csrf) ?>" />
                       <div class="grid gap-1.5">
                         <label for="trelloToken" class="text-sm font-semibold text-slate-900 dark:text-white">Token de acceso</label>
-                        <input id="trelloToken" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="Pega aquí tu token de Trello" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Se recomienda un token con permisos de lectura para organizaciones, boards, lists y cards.</p>
+                        <input id="trelloToken" name="token" type="password" autocomplete="off" spellcheck="false" placeholder="Solo como respaldo manual si la autorización emergente falla" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-pm-500 focus:ring-4 focus:ring-pm-500/15 dark:border-slate-800 dark:bg-slate-950 dark:text-white dark:focus:ring-pm-400/15" />
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Flujo recomendado: usar el botón “Abrir Trello”. Este campo queda solo como alternativa manual.</p>
                       </div>
 
                       <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <button id="connectSubmit" type="submit" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar y validar</button>
+                        <button id="connectSubmit" type="submit" class="inline-flex items-center justify-center rounded-xl bg-pm-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-pm-500 dark:hover:bg-pm-400">Conectar manualmente</button>
                       </div>
                     </form>
                   </div>

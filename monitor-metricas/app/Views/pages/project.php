@@ -27,7 +27,7 @@ function icon(string $name): string {
     return $icons[$name] ?? '';
 }
 
-$projects = [
+$projects = $projects ?? [
     [
         'id' => 'b1',
         'name' => 'Customer Portal',
@@ -79,7 +79,7 @@ $projects = [
     ],
 ];
 
-$id = isset($_GET['id']) ? (string)$_GET['id'] : 'b1';
+$id = isset($projectId) && (string)$projectId !== '' ? (string)$projectId : (isset($_GET['id']) ? (string)$_GET['id'] : 'b1');
 $project = null;
 foreach ($projects as $p) {
     if ($p['id'] === $id) {
@@ -118,7 +118,7 @@ $statusDistribution = [
     ['label' => 'Done', 'value' => 33, 'tone' => 'emerald'],
 ];
 
-$activity = [
+$activity = $activity ?? [
     ['type' => 'comment', 'title' => 'Comentario en “Login UX”', 'meta' => 'hace 12 min · Ana Torres', 'detail' => '“Validación de correo: agregar feedback inline y estado.”'],
     ['type' => 'move', 'title' => 'Movimiento de card', 'meta' => 'hace 38 min · Carlos Ruiz', 'detail' => '“API Rate Limit” pasó de In Progress → Blocked.'],
     ['type' => 'change', 'title' => 'Cambio en checklist', 'meta' => 'hace 2 h · María Gómez', 'detail' => '“Release Notes” completado (8/8).'],

@@ -7,6 +7,7 @@ final class TrelloCard
 {
     public function __construct(
         public readonly int $id,
+        public readonly string $userId,
         public readonly string $trelloCardId,
         public readonly int $listId,
         public readonly int $boardId,
@@ -17,4 +18,3 @@ final class TrelloCard
     ) {
     }
 }
-

@@ -75,6 +75,101 @@ const showResultModal = (success, title, body) => {
 const closeResultModal = () => {
     qs('#resultModal')?.classList.add('hidden');
 };
+const getAuthorizeUrl = () => {
+    const url = window.__PM?.trelloAuthorizeUrl;
+    return typeof url === 'string' ? url.trim() : '';
+};
+const clearTokenHash = () => {
+    if (!window.location.hash)
+        return;
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+};
+const popupFeatures = () => {
+    const width = 760;
+    const height = 820;
+    const left = Math.max(0, Math.round((window.screen.width - width) / 2));
+    const top = Math.max(0, Math.round((window.screen.height - height) / 2));
+    return `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`;
+};
+const openAuthorizePopup = () => {
+    const authorizeUrl = getAuthorizeUrl();
+    if (!authorizeUrl) {
+        showResultModal(false, 'Autorizacion no disponible', 'Falta configurar la URL de autorizacion de Trello en el entorno.');
+        return;
+    }
+    const popup = window.open(authorizeUrl, 'pm-trello-auth', popupFeatures());
+    if (!popup) {
+        window.location.href = authorizeUrl;
+        return;
+    }
+    popup.focus();
+};
+const readTokenFromHash = () => {
+    const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash;
+    if (!hash)
+        return '';
+    const params = new URLSearchParams(hash);
+    return String(params.get('token') ?? '').trim();
+};
+const connectWithToken = async (token, source = 'manual') => {
+    const cleanToken = String(token ?? '').trim();
+    if (!cleanToken) {
+        if (source === 'manual') {
+            toast('Token requerido', 'Ingresa el token para conectar Trello.');
+        }
+        return;
+    }
+    setBusy(true);
+    try {
+        await api('/api/trello/connect', { method: 'POST', body: { token: cleanToken } });
+        const input = qs('#trelloToken');
+        if (input)
+            input.value = '';
+        await refresh();
+        showResultModal(true, 'Trello conectado', source === 'oauth'
+            ? 'La cuenta fue autorizada en Trello y la conexion se completo automaticamente.'
+            : 'La cuenta fue validada y ya puedes sincronizar datos para el monitoreo de metricas del proyecto.');
+    }
+    catch (err) {
+        showResultModal(false, source === 'oauth' ? 'Autorizacion fallida' : 'Conexion fallida', err?.message ? String(err.message) : 'No se pudo conectar Trello.');
+    }
+    finally {
+        setBusy(false);
+    }
+};
+const wireAuthorizeFlow = () => {
+    const authorizeBtn = qs('#authorizeTrelloBtn');
+    authorizeBtn?.addEventListener('click', openAuthorizePopup);
+    window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin)
+            return;
+        const data = event.data ?? {};
+        if (data?.type !== 'pm:trello-authorized')
+            return;
+        const token = typeof data.token === 'string' ? data.token : '';
+        if (!token)
+            return;
+        void connectWithToken(token, 'oauth');
+    });
+};
+const handleAuthorizeCallback = () => {
+    const token = readTokenFromHash();
+    if (!token)
+        return false;
+    clearTokenHash();
+    if (window.opener && window.opener !== window) {
+        try {
+            window.opener.postMessage({ type: 'pm:trello-authorized', token }, window.location.origin);
+            document.body.innerHTML = '<div style="font-family:Inter,Arial,sans-serif;padding:32px;color:#0f172a"><h1 style="font-size:20px;margin:0 0 12px">Trello autorizado</h1><p style="margin:0 0 16px">La autorizacion fue enviada a Project Metrics Monitor. Puedes cerrar esta ventana.</p></div>';
+            window.setTimeout(() => window.close(), 400);
+            return true;
+        }
+        catch {
+        }
+    }
+    void connectWithToken(token, 'oauth');
+    return true;
+};
 const formatDate = (iso) => {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime()))
@@ -143,11 +238,13 @@ const setBusy = (busy) => {
     const connectTop = qs('#connectBtnTop');
     const connect = qs('#connectBtn');
     const submit = qs('#connectSubmit');
+    const authorize = qs('#authorizeTrelloBtn');
     toggle(syncNow);
     toggle(disconnect);
     toggle(connectTop);
     toggle(connect);
     toggle(submit);
+    toggle(authorize);
 };
 const renderConnection = (status) => {
     const connected = Boolean(status?.connected);
@@ -238,6 +335,7 @@ const renderMetrics = (metrics) => {
     const summary = metrics?.summary ?? {};
     const latestSync = metrics?.latest_sync ?? null;
     const boards = Array.isArray(metrics?.boards) ? metrics.boards : [];
+    const recentLogs = Array.isArray(metrics?.recent_logs) ? metrics.recent_logs : [];
     const setText = (selector, value) => {
         const el = qs(selector);
         if (el)
@@ -269,27 +367,58 @@ const renderMetrics = (metrics) => {
     if (boardMetrics) {
         if (boards.length === 0) {
             boardMetrics.innerHTML = '<div class="px-4 py-5 text-sm text-slate-500 dark:text-slate-400">Sin datos de boards. Conecta Trello y ejecuta una sincronizacion para calcular metricas.</div>';
-            return;
         }
-        boardMetrics.innerHTML = boards
-            .map((board) => {
-            const workspace = board.workspace_name ? `<p class="text-xs text-slate-500 dark:text-slate-400">${String(board.workspace_name)}</p>` : '';
-            return `
-            <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">${String(board.name ?? 'Board')}</p>
-                ${workspace}
+        else {
+            boardMetrics.innerHTML = boards
+                .map((board) => {
+                const workspace = board.workspace_name ? `<p class="text-xs text-slate-500 dark:text-slate-400">${String(board.workspace_name)}</p>` : '';
+                return `
+              <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">${String(board.name ?? 'Board')}</p>
+                  ${workspace}
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                  <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Total ${Number(board.total_tasks) || 0}</span>
+                  <span class="rounded-full bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20">Comp. ${Number(board.completed_tasks) || 0}</span>
+                  <span class="rounded-full bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20">Pend. ${Number(board.pending_tasks) || 0}</span>
+                  <span class="rounded-full bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20">Venc. ${Number(board.overdue_tasks) || 0}</span>
+                </div>
               </div>
-              <div class="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-                <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Total ${Number(board.total_tasks) || 0}</span>
-                <span class="rounded-full bg-emerald-50 px-3 py-1.5 font-semibold text-emerald-700 ring-1 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20">Comp. ${Number(board.completed_tasks) || 0}</span>
-                <span class="rounded-full bg-amber-50 px-3 py-1.5 font-semibold text-amber-700 ring-1 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20">Pend. ${Number(board.pending_tasks) || 0}</span>
-                <span class="rounded-full bg-rose-50 px-3 py-1.5 font-semibold text-rose-700 ring-1 ring-rose-100 dark:bg-rose-500/10 dark:text-rose-200 dark:ring-rose-500/20">Venc. ${Number(board.overdue_tasks) || 0}</span>
+            `;
+            })
+                .join('');
+        }
+    }
+    const recentLogsEl = qs('#recentLogs');
+    if (recentLogsEl) {
+        if (recentLogs.length === 0) {
+            recentLogsEl.innerHTML = '<div class="px-4 py-5 text-sm text-slate-500 dark:text-slate-400">Aun no existen logs de sincronizacion para este usuario.</div>';
+        }
+        else {
+            recentLogsEl.innerHTML = recentLogs
+                .map((log) => {
+                const finishedAt = log.finished_at ? formatDate(log.finished_at) : 'En proceso';
+                const tone = Number(log.errors_count) > 0
+                    ? 'bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-500/10 dark:text-amber-200 dark:ring-amber-500/20'
+                    : 'bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-200 dark:ring-emerald-500/20';
+                return `
+              <div class="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-slate-900 dark:text-white">Sync ${String(log.sync_type ?? 'all')}</p>
+                  <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Inicio ${formatDate(String(log.started_at ?? ''))} · Fin ${finishedAt}</p>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Boards ${Number(log.boards_processed) || 0}</span>
+                  <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Lists ${Number(log.lists_processed) || 0}</span>
+                  <span class="rounded-full bg-slate-50 px-3 py-1.5 font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-950 dark:text-slate-200 dark:ring-slate-800">Cards ${Number(log.cards_processed) || 0}</span>
+                  <span class="rounded-full px-3 py-1.5 font-semibold ring-1 ${tone}">Errores ${Number(log.errors_count) || 0}</span>
+                </div>
               </div>
-            </div>
-          `;
-        })
-            .join('');
+            `;
+            })
+                .join('');
+        }
     }
 };
 const focusConnectForm = () => {
@@ -297,9 +426,9 @@ const focusConnectForm = () => {
     if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    const input = qs('#trelloToken');
-    if (input) {
-        window.setTimeout(() => input.focus(), 150);
+    const authorize = qs('#authorizeTrelloBtn');
+    if (authorize) {
+        window.setTimeout(() => authorize.focus(), 150);
     }
 };
 const refresh = async () => {
@@ -362,6 +491,7 @@ const init = () => {
         });
     }
     wireSidebar();
+    wireAuthorizeFlow();
     const connectTop = qs('#connectBtnTop');
     const connect = qs('#connectBtn');
     const disconnect = qs('#disconnectBtn');
@@ -380,24 +510,7 @@ const init = () => {
         e.preventDefault();
         const input = qs('#trelloToken');
         const token = input ? String(input.value ?? '').trim() : '';
-        if (!token) {
-            toast('Token requerido', 'Ingresa el token para conectar Trello.');
-            return;
-        }
-        setBusy(true);
-        try {
-            await api('/api/trello/connect', { method: 'POST', body: { token } });
-            if (input)
-                input.value = '';
-            await refresh();
-            showResultModal(true, 'Trello conectado', 'La cuenta fue validada y ya puedes sincronizar datos para el monitoreo de metricas del proyecto.');
-        }
-        catch (err) {
-            showResultModal(false, 'Conexion fallida', err?.message ? String(err.message) : 'No se pudo conectar Trello.');
-        }
-        finally {
-            setBusy(false);
-        }
+        void connectWithToken(token, 'manual');
     });
     disconnect?.addEventListener('click', async () => {
         setBusy(true);
@@ -417,6 +530,8 @@ const init = () => {
     syncNow?.addEventListener('click', () => void syncSelected());
     const initial = window.__PM?.trelloStatus ?? null;
     const initialMetrics = window.__PM?.trelloMetrics ?? null;
+    if (handleAuthorizeCallback())
+        return;
     if (initial)
         renderConnection(initial);
     if (initialMetrics)

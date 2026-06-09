@@ -36,7 +36,16 @@ interface IProjectMetricsService
      *     errors_count:int,
      *     started_at:string,
      *     finished_at:?string
-     *   }
+     *   },
+     *   recent_logs: list<array{
+     *     sync_type:string,
+     *     boards_processed:int,
+     *     lists_processed:int,
+     *     cards_processed:int,
+     *     errors_count:int,
+     *     started_at:string,
+     *     finished_at:?string
+     *   }>
      * }
      */
     public function getOverview(string $userId): array;

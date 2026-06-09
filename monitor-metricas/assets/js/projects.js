@@ -175,8 +175,8 @@ const renderCard = (p) => {
         <button data-action="analytics" data-id="${escapeHtml(p.id)}" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800">
           Analítica
         </button>
-        <button data-action="powerbi" data-id="${escapeHtml(p.id)}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-pm-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500 dark:hover:bg-pm-400">
-          Power BI
+        <button data-action="alerts" data-id="${escapeHtml(p.id)}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-pm-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-pm-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pm-500 dark:bg-pm-500 dark:hover:bg-pm-400">
+          Alertas
         </button>
       </div>
     </article>
@@ -275,11 +275,11 @@ const init = () => {
                 const project = data.projects.find((p) => p.id === id);
                 const name = project?.name ?? 'Proyecto';
                 if (action === 'details')
-                    toast('Ver detalles', `Acción para “${name}”.`);
+                    window.location.href = `/projects/${encodeURIComponent(id)}`;
                 if (action === 'analytics')
-                    toast('Analítica', `Vista analítica para “${name}”.`);
-                if (action === 'powerbi')
-                    toast('Power BI', `Abrir reporte de “${name}”.`);
+                    window.location.href = `/analytics?project=${encodeURIComponent(id)}`;
+                if (action === 'alerts')
+                    window.location.href = `/alerts?project=${encodeURIComponent(name)}`;
             });
         });
     };

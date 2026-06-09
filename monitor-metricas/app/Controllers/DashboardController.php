@@ -6,13 +6,18 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Request;
 use App\Core\Response;
+use App\Interfaces\IMonitoringService;
 
 final class DashboardController extends Controller
 {
+    public function __construct(private readonly IMonitoringService $monitoring)
+    {
+    }
+
     public function index(Request $request, Response $response): void
     {
         $this->requireAuth($response);
-        $this->render('pages/dashboard');
+        $userId = (string)($_SESSION['user']['id'] ?? '');
+        $this->render('pages/dashboard', $this->monitoring->getDashboardData($userId));
     }
 }
-

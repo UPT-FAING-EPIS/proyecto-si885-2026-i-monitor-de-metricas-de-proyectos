@@ -12,7 +12,7 @@ final class TrelloCardRepository
     {
     }
 
-    public function upsert(int $boardId, int $listId, CardDTO $dto): int
+    public function upsert(string $userId, int $boardId, int $listId, CardDTO $dto): int
     {
         $due = null;
         if ($dto->dueDateIso !== null && trim($dto->dueDateIso) !== '') {
@@ -20,9 +20,9 @@ final class TrelloCardRepository
         }
 
         $stmt = $this->pdo->prepare(
-            'insert into trello_cards (trello_card_id, list_id, board_id, name, description, due_date, closed, created_at, updated_at)
-             values (:tid, :lid, :bid, :name, :description, :due_date, :closed, now(), now())
-             on conflict (trello_card_id) do update set
+            'insert into trello_cards (user_id, trello_card_id, list_id, board_id, name, description, due_date, closed, created_at, updated_at)
+             values (:user_id, :tid, :lid, :bid, :name, :description, :due_date, :closed, now(), now())
+             on conflict (user_id, trello_card_id) do update set
                list_id = excluded.list_id,
                board_id = excluded.board_id,
                name = excluded.name,
@@ -33,6 +33,7 @@ final class TrelloCardRepository
              returning id'
         );
         $stmt->execute([
+            'user_id' => $userId,
             'tid' => $dto->trelloId,
             'lid' => $listId,
             'bid' => $boardId,
@@ -46,18 +47,18 @@ final class TrelloCardRepository
     }
 
     /** @param list<string> $trelloCardIds */
-    public function markClosedNotIn(int $boardId, array $trelloCardIds): int
+    public function markClosedNotIn(string $userId, int $boardId, array $trelloCardIds): int
     {
         $trelloCardIds = array_values(array_filter(array_map('strval', $trelloCardIds), static fn (string $v): bool => trim($v) !== ''));
 
         if ($trelloCardIds === []) {
-            $stmt = $this->pdo->prepare('update trello_cards set closed = true, updated_at = now() where board_id = :bid and closed = false');
-            $stmt->execute(['bid' => $boardId]);
+            $stmt = $this->pdo->prepare('update trello_cards set closed = true, updated_at = now() where user_id = :user_id and board_id = :bid and closed = false');
+            $stmt->execute(['user_id' => $userId, 'bid' => $boardId]);
             return $stmt->rowCount();
         }
 
         $placeholders = [];
-        $params = ['bid' => $boardId];
+        $params = ['user_id' => $userId, 'bid' => $boardId];
         foreach ($trelloCardIds as $i => $id) {
             $key = 'id' . $i;
             $placeholders[] = ':' . $key;
@@ -67,7 +68,7 @@ final class TrelloCardRepository
         $stmt = $this->pdo->prepare(
             'update trello_cards
              set closed = true, updated_at = now()
-             where board_id = :bid and closed = false and trello_card_id not in (' . implode(',', $placeholders) . ')'
+             where user_id = :user_id and board_id = :bid and closed = false and trello_card_id not in (' . implode(',', $placeholders) . ')'
         );
         $stmt->execute($params);
         return $stmt->rowCount();

@@ -24,7 +24,7 @@ function icon(string $name): string {
     return $icons[$name] ?? '';
 }
 
-$alerts = [
+$alerts = $alerts ?? [
     [
         'id' => 'a-1001',
         'severity' => 'Riesgo Alto',
@@ -87,7 +87,7 @@ $alerts = [
     ],
 ];
 
-$payload = [
+$payload = $payload ?? [
     'alerts' => $alerts,
     'projects' => array_values(array_unique(array_map(static fn ($a) => (string)$a['project'], $alerts))),
     'types' => [

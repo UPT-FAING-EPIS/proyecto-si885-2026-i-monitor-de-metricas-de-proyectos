@@ -15,9 +15,10 @@ final class ProjectMetricsService implements IProjectMetricsService
     public function getOverview(string $userId): array
     {
         return [
-            'summary' => $this->metrics->getSummary(),
-            'boards' => $this->metrics->getBoardBreakdown(),
+            'summary' => $this->metrics->getSummary($userId),
+            'boards' => $this->metrics->getBoardBreakdown($userId),
             'latest_sync' => $this->metrics->getLatestSyncForUser($userId),
+            'recent_logs' => $this->metrics->getRecentLogsForUser($userId),
         ];
     }
 }

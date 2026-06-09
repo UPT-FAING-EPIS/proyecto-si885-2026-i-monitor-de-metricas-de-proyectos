@@ -12,18 +12,19 @@ final class TrelloWorkspaceRepository
     {
     }
 
-    public function upsert(WorkspaceDTO $dto): int
+    public function upsert(string $userId, WorkspaceDTO $dto): int
     {
         $stmt = $this->pdo->prepare(
-            'insert into trello_workspaces (trello_workspace_id, name, description, created_at, updated_at)
-             values (:tid, :name, :description, now(), now())
-             on conflict (trello_workspace_id) do update set
+            'insert into trello_workspaces (user_id, trello_workspace_id, name, description, created_at, updated_at)
+             values (:user_id, :tid, :name, :description, now(), now())
+             on conflict (user_id, trello_workspace_id) do update set
                name = excluded.name,
                description = excluded.description,
                updated_at = now()
              returning id'
         );
         $stmt->execute([
+            'user_id' => $userId,
             'tid' => $dto->trelloId,
             'name' => $dto->name,
             'description' => $dto->description,
@@ -32,10 +33,10 @@ final class TrelloWorkspaceRepository
         return (int)($row['id'] ?? 0);
     }
 
-    public function findIdByTrelloId(string $trelloWorkspaceId): ?int
+    public function findIdByTrelloId(string $userId, string $trelloWorkspaceId): ?int
     {
-        $stmt = $this->pdo->prepare('select id from trello_workspaces where trello_workspace_id = :tid limit 1');
-        $stmt->execute(['tid' => $trelloWorkspaceId]);
+        $stmt = $this->pdo->prepare('select id from trello_workspaces where user_id = :user_id and trello_workspace_id = :tid limit 1');
+        $stmt->execute(['user_id' => $userId, 'tid' => $trelloWorkspaceId]);
         $row = $stmt->fetch();
         if (!is_array($row)) {
             return null;
@@ -43,4 +44,3 @@ final class TrelloWorkspaceRepository
         return (int)($row['id'] ?? 0);
     }
 }
-

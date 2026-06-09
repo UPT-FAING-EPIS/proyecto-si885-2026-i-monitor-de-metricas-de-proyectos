@@ -155,6 +155,10 @@ const init = () => {
     }
     projectFilter.innerHTML = `<option value="">Todos</option>` + payload.projects.map((p) => `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`).join('');
     typeFilter.innerHTML = `<option value="">Todos</option>` + payload.types.map((t) => `<option value="${t.id}">${escapeHtml(t.label)}</option>`).join('');
+    const initialProject = new URLSearchParams(window.location.search).get('project');
+    if (initialProject) {
+        projectFilter.value = initialProject;
+    }
     let activeSeverity = 'Riesgo Alto';
     let selectedId = null;
     const setActiveTab = (severity) => {
@@ -347,6 +351,10 @@ const init = () => {
         if (!selectedId)
             return;
         const a = alerts.find((x) => x.id === selectedId);
+        if (a?.projectId) {
+            window.location.href = `/projects/${encodeURIComponent(a.projectId)}`;
+            return;
+        }
         toast('Proyecto', a ? `Abrir: ${a.project}` : 'Abrir proyecto');
     });
     window.addEventListener('resize', () => render());
@@ -356,4 +364,3 @@ try {
     window.addEventListener('DOMContentLoaded', init);
 }
 catch { }
-

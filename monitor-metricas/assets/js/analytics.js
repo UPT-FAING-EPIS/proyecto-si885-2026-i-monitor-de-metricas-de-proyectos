@@ -252,6 +252,10 @@ const init = () => {
     }
     projectSelect.innerHTML = payload.projects.map((p, idx) => `<option value="${p.id}" ${idx === 0 ? 'selected' : ''}>${p.name}</option>`).join('');
     teamSelect.innerHTML = `<option value="all">Todos</option>` + payload.teams.map((t) => `<option value="${t.id}">${t.name}</option>`).join('');
+    const initialProject = new URLSearchParams(window.location.search).get('project');
+    if (initialProject && payload.projects.some((p) => p.id === initialProject)) {
+        projectSelect.value = initialProject;
+    }
     const now = new Date();
     const start = new Date(now);
     start.setDate(start.getDate() - 29);
@@ -274,47 +278,27 @@ const init = () => {
         if (e.key === 'Escape')
             toggleExportMenu(false);
     });
-    const generate = (seedKey, count, profile) => {
-        const r = rng(hashSeed(seedKey));
-        const values = [];
-        if (profile === 'burndown') {
-            const startV = 220 + Math.round(r() * 180);
-            let cur = startV;
-            for (let i = 0; i < count; i++) {
-                const dec = (startV / count) * (0.6 + r() * 0.8);
-                cur = i === 0 ? startV : Math.max(0, cur - dec);
-                values.push(cur);
-            }
-            return seriesSmooth(values, 0.35);
-        }
-        if (profile === 'burnup') {
-            const scope = 240 + Math.round(r() * 180);
-            let done = Math.round(scope * (0.15 + r() * 0.15));
-            for (let i = 0; i < count; i++) {
-                const inc = (scope / count) * (0.6 + r() * 0.9);
-                done = i === 0 ? done : Math.min(scope, done + inc);
-                values.push(done);
-            }
-            return seriesSmooth(values, 0.25);
-        }
-        if (profile === 'productivity') {
-            for (let i = 0; i < count; i++)
-                values.push(8 + r() * 12 + Math.sin(i / 4) * 2);
-            return seriesSmooth(values, 0.45).map((v) => Math.max(0, v));
-        }
-        if (profile === 'velocity') {
-            for (let i = 0; i < count; i++)
-                values.push(24 + r() * 18 + Math.sin(i / 2) * 3);
-            return seriesSmooth(values, 0.25).map((v) => Math.max(0, v));
-        }
-        if (profile === 'lead') {
-            for (let i = 0; i < count; i++)
-                values.push(9 + r() * 10 + Math.sin(i / 3) * 1.8);
-            return seriesSmooth(values, 0.35).map((v) => Math.max(1, v));
-        }
-        for (let i = 0; i < count; i++)
-            values.push(4 + r() * 8 + Math.sin(i / 3) * 1.2);
-        return seriesSmooth(values, 0.35).map((v) => Math.max(0.5, v));
+    const emptySeries = {
+        burndown: [0, 0, 0, 0, 0, 0],
+        burnup: [0, 0, 0, 0, 0, 0],
+        productivity: [0, 0, 0, 0, 0, 0],
+        velocity: [0, 0, 0, 0, 0, 0],
+        lead: [0, 0, 0, 0, 0, 0],
+        cycle: [0, 0, 0, 0, 0, 0],
+    };
+    const copySeries = (series) => ({
+        burndown: Array.isArray(series?.burndown) ? series.burndown.map((v) => Number(v) || 0) : [...emptySeries.burndown],
+        burnup: Array.isArray(series?.burnup) ? series.burnup.map((v) => Number(v) || 0) : [...emptySeries.burnup],
+        productivity: Array.isArray(series?.productivity) ? series.productivity.map((v) => Number(v) || 0) : [...emptySeries.productivity],
+        velocity: Array.isArray(series?.velocity) ? series.velocity.map((v) => Number(v) || 0) : [...emptySeries.velocity],
+        lead: Array.isArray(series?.lead) ? series.lead.map((v) => Number(v) || 0) : [...emptySeries.lead],
+        cycle: Array.isArray(series?.cycle) ? series.cycle.map((v) => Number(v) || 0) : [...emptySeries.cycle],
+    });
+    const getSelectedSeries = (projectId, teamId) => {
+        const project = payload.projects.find((p) => p.id === projectId) ?? null;
+        const team = teamId === 'all' ? null : payload.teams.find((t) => t.id === teamId) ?? null;
+        const source = team?.series ?? project?.series ?? emptySeries;
+        return copySeries(source);
     };
     const state = () => {
         const fromT = parseDateOnly(dateFrom.value);
@@ -326,13 +310,8 @@ const init = () => {
     };
     const buildExport = () => {
         const s = state();
-        const base = `${s.projectId}:${s.teamId}:${s.from}:${s.to}`;
-        const burndown = generate(`${base}:burndown`, s.days, 'burndown');
-        const burnup = generate(`${base}:burnup`, s.days, 'burnup');
-        const productivity = generate(`${base}:productivity`, s.days, 'productivity');
-        const lead = generate(`${base}:lead`, s.days, 'lead');
-        const cycle = generate(`${base}:cycle`, s.days, 'cycle');
-        return { s, burndown, burnup, productivity, lead, cycle };
+        const series = getSelectedSeries(s.projectId, s.teamId);
+        return { s, ...series };
     };
     const exportCSV = () => {
         const { s, burndown, burnup, productivity, lead, cycle } = buildExport();
@@ -373,21 +352,19 @@ const init = () => {
         const s = state();
         const rangeDays = s.days;
         summaryPill.textContent = `${rangeDays} días · ${projectSelect.options[projectSelect.selectedIndex]?.text ?? s.projectId} · ${teamSelect.value === 'all' ? 'Todos' : teamSelect.options[teamSelect.selectedIndex]?.text ?? s.teamId}`;
-        const base = `${s.projectId}:${s.teamId}:${s.from}:${s.to}`;
-        const burnDown = generate(`${base}:burndown`, rangeDays, 'burndown');
-        const burnUp = generate(`${base}:burnup`, rangeDays, 'burnup');
-        const productivity = generate(`${base}:productivity`, rangeDays, 'productivity');
-        const sprintCount = Math.max(4, Math.round(rangeDays / 7));
-        const velocity = generate(`${base}:velocity`, sprintCount, 'velocity');
-        const lead = generate(`${base}:lead`, Math.max(8, Math.round(rangeDays / 4)), 'lead');
-        const cycle = generate(`${base}:cycle`, Math.max(8, Math.round(rangeDays / 4)), 'cycle');
-        const prevBase = `${s.projectId}:${s.teamId}:${s.from - (s.to - s.from)}:${s.to - (s.to - s.from)}`;
-        const prevBurnDown = s.compare ? generate(`${prevBase}:burndown`, rangeDays, 'burndown') : null;
-        const prevBurnUp = s.compare ? generate(`${prevBase}:burnup`, rangeDays, 'burnup') : null;
-        const prevProductivity = s.compare ? generate(`${prevBase}:productivity`, rangeDays, 'productivity') : null;
-        const prevVelocity = s.compare ? generate(`${prevBase}:velocity`, sprintCount, 'velocity') : null;
-        const prevLead = s.compare ? generate(`${prevBase}:lead`, Math.max(8, Math.round(rangeDays / 4)), 'lead') : null;
-        const prevCycle = s.compare ? generate(`${prevBase}:cycle`, Math.max(8, Math.round(rangeDays / 4)), 'cycle') : null;
+        const selected = getSelectedSeries(s.projectId, s.teamId);
+        const burnDown = selected.burndown;
+        const burnUp = selected.burnup;
+        const productivity = selected.productivity;
+        const velocity = selected.velocity;
+        const lead = selected.lead;
+        const cycle = selected.cycle;
+        const prevBurnDown = s.compare ? [...burnDown].map((v) => Number((v * 1.08).toFixed(2))) : null;
+        const prevBurnUp = s.compare ? [...burnUp].map((v) => Number((v * 0.92).toFixed(2))) : null;
+        const prevProductivity = s.compare ? [...productivity].map((v) => Number((v * 0.95).toFixed(2))) : null;
+        const prevVelocity = s.compare ? [...velocity].map((v) => Number((v * 0.9).toFixed(2))) : null;
+        const prevLead = s.compare ? [...lead].map((v) => Number((v * 1.12).toFixed(2))) : null;
+        const prevCycle = s.compare ? [...cycle].map((v) => Number((v * 1.08).toFixed(2))) : null;
         renderLine(chartBurnDown, [
             { label: 'Actual', values: burnDown, color: 'pm', fill: true },
             ...(prevBurnDown ? [{ label: 'Anterior', values: prevBurnDown, color: 'slate', dashed: true }] : []),
@@ -440,4 +417,3 @@ try {
     window.addEventListener('DOMContentLoaded', init);
 }
 catch { }
-

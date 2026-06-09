@@ -7,6 +7,7 @@ final class TrelloList
 {
     public function __construct(
         public readonly int $id,
+        public readonly string $userId,
         public readonly string $trelloListId,
         public readonly int $boardId,
         public readonly string $name,
@@ -14,4 +15,3 @@ final class TrelloList
     ) {
     }
 }
-

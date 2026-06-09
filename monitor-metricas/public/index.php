@@ -32,6 +32,7 @@ $container->set(\App\Repositories\TrelloCardRepository::class, static fn (\App\C
 $container->set(\App\Repositories\SyncLogRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\SyncLogRepository($c->get('pdo')));
 $container->set(\App\Repositories\ProjectMetricsRepository::class, static fn (\App\Core\Container $c) => new \App\Repositories\ProjectMetricsRepository($c->get('pdo')));
 $container->set(\App\Interfaces\IProjectMetricsService::class, static fn (\App\Core\Container $c) => new \App\Services\ProjectMetricsService($c->get(\App\Repositories\ProjectMetricsRepository::class)));
+ $container->set(\App\Interfaces\IMonitoringService::class, static fn (\App\Core\Container $c) => new \App\Services\MonitoringService($c->get(\App\Repositories\ProjectMetricsRepository::class)));
 $container->set(\App\Interfaces\ITrelloSyncService::class, static fn (\App\Core\Container $c) => new \App\Services\TrelloSyncService(
     $c->get('pdo'),
     $c->get('crypto'),
@@ -42,6 +43,18 @@ $container->set(\App\Interfaces\ITrelloSyncService::class, static fn (\App\Core\
     $c->get(\App\Repositories\TrelloListRepository::class),
     $c->get(\App\Repositories\TrelloCardRepository::class),
     $c->get(\App\Repositories\SyncLogRepository::class),
+));
+$container->set(\App\Controllers\DashboardController::class, static fn (\App\Core\Container $c) => new \App\Controllers\DashboardController(
+    $c->get(\App\Interfaces\IMonitoringService::class),
+));
+$container->set(\App\Controllers\ProjectsController::class, static fn (\App\Core\Container $c) => new \App\Controllers\ProjectsController(
+    $c->get(\App\Interfaces\IMonitoringService::class),
+));
+$container->set(\App\Controllers\AnalyticsController::class, static fn (\App\Core\Container $c) => new \App\Controllers\AnalyticsController(
+    $c->get(\App\Interfaces\IMonitoringService::class),
+));
+$container->set(\App\Controllers\AlertsController::class, static fn (\App\Core\Container $c) => new \App\Controllers\AlertsController(
+    $c->get(\App\Interfaces\IMonitoringService::class),
 ));
 $container->set(\App\Controllers\TrelloController::class, static fn (\App\Core\Container $c) => new \App\Controllers\TrelloController(
     $c->get(\App\Interfaces\ITrelloSyncService::class),
@@ -150,11 +163,21 @@ $router->get('/register', [new \App\Controllers\AuthController(), 'showRegister'
 $router->post('/register', [new \App\Controllers\AuthController(), 'register']);
 $router->post('/logout', [new \App\Controllers\AuthController(), 'logout']);
 
-$router->get('/dashboard', [new \App\Controllers\DashboardController(), 'index']);
-$router->get('/projects', [new \App\Controllers\ProjectsController(), 'index']);
-$router->get('/projects/{id}', [new \App\Controllers\ProjectsController(), 'show']);
-$router->get('/analytics', [new \App\Controllers\AnalyticsController(), 'index']);
-$router->get('/alerts', [new \App\Controllers\AlertsController(), 'index']);
+$router->get('/dashboard', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+    $container->get(\App\Controllers\DashboardController::class)->index($req, $res);
+});
+$router->get('/projects', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+    $container->get(\App\Controllers\ProjectsController::class)->index($req, $res);
+});
+$router->get('/projects/{id}', static function (\App\Core\Request $req, \App\Core\Response $res, array $params) use ($container): void {
+    $container->get(\App\Controllers\ProjectsController::class)->show($req, $res, $params);
+});
+$router->get('/analytics', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+    $container->get(\App\Controllers\AnalyticsController::class)->index($req, $res);
+});
+$router->get('/alerts', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container): void {
+    $container->get(\App\Controllers\AlertsController::class)->index($req, $res);
+});
 $router->get('/powerbi', [new \App\Controllers\PowerBIController(), 'index']);
 $router->get('/settings', [new \App\Controllers\SettingsController(), 'index']);
 $router->get('/trello', static function (\App\Core\Request $req, \App\Core\Response $res) use ($container, $trelloInitErrorMessage, $collectTrelloDiagnostics, $renderTrelloBootstrapError): void {

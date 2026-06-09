@@ -21,7 +21,7 @@ function icon(string $name): string {
     return $icons[$name] ?? '';
 }
 
-$projects = [
+$projects = $projects ?? [
     [
         'id' => 'b1',
         'name' => 'Customer Portal',
