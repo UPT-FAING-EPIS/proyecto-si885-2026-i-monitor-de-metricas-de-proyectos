@@ -24,7 +24,18 @@ $trelloStatus = isset($trelloStatus) && is_array($trelloStatus) ? $trelloStatus 
 $trelloMetrics = isset($trelloMetrics) && is_array($trelloMetrics) ? $trelloMetrics : ['summary' => [], 'boards' => [], 'latest_sync' => null];
 $trelloError = isset($trelloError) && is_string($trelloError) ? $trelloError : '';
 $trelloApiKey = trim((string)($_ENV['TRELLO_API_KEY'] ?? $_SERVER['TRELLO_API_KEY'] ?? getenv('TRELLO_API_KEY') ?: ''));
-$appUrl = trim((string)($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? getenv('APP_URL') ?: ''));
+$configuredAppUrl = trim((string)($_ENV['APP_URL'] ?? $_SERVER['APP_URL'] ?? getenv('APP_URL') ?: ''));
+$forwardedProto = trim((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+$forwardedHost = trim((string)($_SERVER['HTTP_X_FORWARDED_HOST'] ?? ''));
+$requestHost = trim((string)($_SERVER['HTTP_HOST'] ?? ''));
+$requestScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $forwardedProto === 'https'
+    ? 'https'
+    : 'http';
+$runtimeOrigin = '';
+if ($forwardedHost !== '' || $requestHost !== '') {
+    $runtimeOrigin = $requestScheme . '://' . ($forwardedHost !== '' ? $forwardedHost : $requestHost);
+}
+$appUrl = $runtimeOrigin !== '' ? $runtimeOrigin : $configuredAppUrl;
 $trelloAuthorizeUrl = '';
 if ($trelloApiKey !== '' && $appUrl !== '') {
     $trelloAuthorizeUrl = 'https://trello.com/1/authorize?' . http_build_query([
