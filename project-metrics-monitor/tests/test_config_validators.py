@@ -11,6 +11,7 @@ from src.utils.validators import validate_owner, validate_repos, validate_since
 
 
 def test_load_dotenv_and_build_settings(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     (tmp_path / ".env").write_text("GITHUB_TOKEN=test-token\n", encoding="utf-8")
     load_dotenv(tmp_path / ".env")
     args = Namespace(
