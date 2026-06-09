@@ -1,0 +1,4 @@
+label_id,label_name,color,description
+label:unknown,unknown,999999,Fallback label
+label:enhancement,enhancement,a2eeef,Feature
+label:bug,bug,d73a4a,Bug

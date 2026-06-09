@@ -1,0 +1,2 @@
+issue_id,issue_number,repo_id,author_id,created_date_id,closed_date_id,created_at,closed_at,cycle_time_hours,current_age_hours,state,is_bug
+I_kwDOAAA,10,1001,user:alice,20260109,20260110,2026-01-09T08:00:00+00:00,2026-01-10T09:00:00+00:00,25.0,,CLOSED,1

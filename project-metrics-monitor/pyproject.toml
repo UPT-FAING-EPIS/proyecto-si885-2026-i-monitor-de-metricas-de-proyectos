@@ -1,0 +1,33 @@
+[project]
+name = "project-metrics-monitor"
+version = "1.0.0"
+description = "Monitor de metricas de proyectos para ETL GitHub + SQLite + Power BI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+  "requests>=2.32.3",
+  "pandas>=2.2.2",
+  "pyarrow>=17.0.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "N", "C4"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--cov=src --cov-report=term-missing --cov-fail-under=80"
+
+[tool.coverage.run]
+omit = [
+  "src/run.py",
+  "src/cli/*",
+]

@@ -1,0 +1,2 @@
+repo_id,repo_name,issues_total,bugs_total,bug_ratio,prs_with_requested_changes,workflow_failure_rate
+1001,sample-repo,1,1,1.0,1,0.0

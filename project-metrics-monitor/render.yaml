@@ -1,0 +1,96 @@
+services:
+  - type: cron
+    name: project-metrics-monitor-etl-6h
+    runtime: python
+    plan: starter
+    region: oregon
+    schedule: "0 */6 * * *"
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: >
+      python -m src.run
+      --owner ${GITHUB_OWNER}
+      --repos ${GITHUB_REPOS}
+      --since ${ETL_SINCE}
+      --db-path ${DB_PATH}
+      --export-csv
+      --export-parquet
+      --public-export
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: GITHUB_OWNER
+        sync: false
+      - key: GITHUB_REPOS
+        sync: false
+      - key: ETL_SINCE
+        value: 2026-01-01T00:00:00Z
+      - key: DB_PATH
+        value: database/project_metrics_render_6h.db
+      - key: GITHUB_TOKEN
+        sync: false
+
+  - type: cron
+    name: project-metrics-monitor-etl-12h
+    runtime: python
+    plan: starter
+    region: oregon
+    schedule: "0 */12 * * *"
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: >
+      python -m src.run
+      --owner ${GITHUB_OWNER}
+      --repos ${GITHUB_REPOS}
+      --since ${ETL_SINCE}
+      --db-path ${DB_PATH}
+      --export-csv
+      --export-parquet
+      --public-export
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: GITHUB_OWNER
+        sync: false
+      - key: GITHUB_REPOS
+        sync: false
+      - key: ETL_SINCE
+        value: 2026-01-01T00:00:00Z
+      - key: DB_PATH
+        value: database/project_metrics_render_12h.db
+      - key: GITHUB_TOKEN
+        sync: false
+
+  - type: cron
+    name: project-metrics-monitor-etl-daily
+    runtime: python
+    plan: starter
+    region: oregon
+    schedule: "0 2 * * *"
+    buildCommand: |
+      python -m pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: >
+      python -m src.run
+      --owner ${GITHUB_OWNER}
+      --repos ${GITHUB_REPOS}
+      --since ${ETL_SINCE}
+      --db-path ${DB_PATH}
+      --export-csv
+      --export-parquet
+      --public-export
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: GITHUB_OWNER
+        sync: false
+      - key: GITHUB_REPOS
+        sync: false
+      - key: ETL_SINCE
+        value: 2026-01-01T00:00:00Z
+      - key: DB_PATH
+        value: database/project_metrics_render_daily.db
+      - key: GITHUB_TOKEN
+        sync: false

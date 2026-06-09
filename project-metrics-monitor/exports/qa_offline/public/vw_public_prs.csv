@@ -1,0 +1,2 @@
+pr_id,pr_number,repo_id,author_id,created_date_id,merged_date_id,created_at,merged_at,closed_at,state,lead_time_hours,review_time_hours,commits_count,changed_files,additions,deletions,requested_changes_count
+PR_kwDOAAA,1,1001,user:bob,20260111,20260112,2026-01-11T10:00:00+00:00,2026-01-12T16:00:00+00:00,2026-01-12T16:00:00+00:00,MERGED,30.0,2.0,3,4,100,20,1

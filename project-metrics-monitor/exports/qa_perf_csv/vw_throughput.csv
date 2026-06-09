@@ -1,0 +1,3 @@
+repo_id,repo_name,year_week,commits_count,prs_merged_count,issues_closed_count,throughput_total
+1001,sample-repo,2026-01,1,0,1,1
+1001,sample-repo,2026-02,0,1,0,1

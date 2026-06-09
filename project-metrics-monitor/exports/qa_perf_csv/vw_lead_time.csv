@@ -1,0 +1,2 @@
+repo_id,repo_name,prs_count,avg_lead_time_hours,median_lead_time_hours,avg_review_time_hours,avg_pr_size
+1001,sample-repo,1,30.0,30.0,2.0,120.0

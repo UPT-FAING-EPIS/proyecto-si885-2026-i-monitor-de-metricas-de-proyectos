@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.coverage
+.env
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.sqlite3
+exports/*.csv
+exports/*.parquet
+exports/*.db
+dist/
+build/

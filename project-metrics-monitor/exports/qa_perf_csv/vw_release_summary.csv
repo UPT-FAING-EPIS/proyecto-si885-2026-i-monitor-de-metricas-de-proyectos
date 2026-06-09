@@ -1,0 +1,2 @@
+repo_id,repo_name,release_id,release_date,tag_name,days_since_previous_release
+1001,sample-repo,501,2026-01-15T10:00:00+00:00,v1.0.0,

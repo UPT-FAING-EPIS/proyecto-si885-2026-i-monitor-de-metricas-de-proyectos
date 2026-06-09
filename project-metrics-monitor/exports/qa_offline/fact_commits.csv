@@ -1,0 +1,2 @@
+commit_id,repo_id,author_id,date_id,commit_date,message,additions,deletions
+abc123,1001,user:alice,20260110,2026-01-10T10:00:00+00:00,feat: initial sample pipeline,50,5

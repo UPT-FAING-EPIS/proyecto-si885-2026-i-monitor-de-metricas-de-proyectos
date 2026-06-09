@@ -1,0 +1,2 @@
+repo_id,repo_name,issues_count,avg_cycle_time_hours,max_cycle_time_hours
+1001,sample-repo,1,25.0,25.0

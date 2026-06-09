@@ -1,0 +1,2 @@
+release_id,repo_id,date_id,release_date,tag_name,name,draft,prerelease
+501,1001,20260115,2026-01-15T10:00:00+00:00,v1.0.0,Initial release,0,0
