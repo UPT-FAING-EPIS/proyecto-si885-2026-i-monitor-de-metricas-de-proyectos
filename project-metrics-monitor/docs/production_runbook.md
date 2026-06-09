@@ -336,43 +336,71 @@ python -m src.run --owner TU_OWNER --repos TU_REPO1,TU_REPO2 --since 2026-01-01T
 
 ## 10. Render
 
-### 10.1 Veredicto tecnico
+### 10.1 Importante (gratis vs pago)
 
-No uses un `cron job` de Render para este proyecto con SQLite persistente.
+Render tiene instancias Free para Web Services y Static Sites, pero otros tipos de servicio pueden requerir facturacion habilitada. Documentacion oficial: https://render.com/docs/free
+
+Este repositorio incluye dos blueprints:
+
+- Gratis (sin tarjeta): `project-metrics-monitor/render.yaml`
+- Produccion con persistencia (requiere pago): `project-metrics-monitor/render.paid.yaml`
+
+Limitacion clave del modo gratis:
+
+- No hay disco persistente, por lo que la base SQLite y exportaciones se pierden si el servicio se reinicia o “spins down”.
+
+### 10.2 Despliegue GRATIS (sin tarjeta)
+
+Ruta exacta:
+
+- Render Dashboard -> `New` -> `Blueprint` -> `Connect` tu repositorio
+
+Valores exactos:
+
+- Branch: `main` o tu rama productiva real
+- Blueprint Path: `project-metrics-monitor/render.yaml`
+
+Variables que te pedira (porque `sync: false`):
+
+- `GITHUB_OWNER` = TU_OWNER
+- `GITHUB_REPOS` = TU_REPO1,TU_REPO2
+- `GITHUB_TOKEN` = github_pat_REEMPLAZAR
+
+Verificacion (gratis):
+
+- Abre la URL del servicio `project-metrics-monitor-web`
+- Debes ver listado de archivos en `runtime_data/exports/`
+- La carpeta `public/` contiene exportaciones anonimizadas
+
+Para ejecutar ETL manualmente:
+
+- Abre: `https://TU-SERVICIO.onrender.com/run?allow=true`
+
+### 10.3 Despliegue con PERSISTENCIA (requiere pago)
+
+No uses `cron` de Render para este proyecto con SQLite persistente.
 
 Motivo:
 
 - Los cron jobs de Render no pueden usar persistent disk.
 - SQLite necesita almacenamiento persistente para mantener `etl_control`, la base y las exportaciones entre reinicios.
 
-Por eso el `render.yaml` del proyecto fue corregido para usar:
+Blueprint de produccion:
 
 - `type: worker`
 - `rootDir: project-metrics-monitor`
 - `disk.mountPath: /opt/render/project/src/project-metrics-monitor/storage`
 
-### 10.2 Como crear el servicio
-
 Ruta exacta:
 
-- Render Dashboard
-- `New`
-- `Blueprint`
-- `Connect` tu repositorio
+- Render Dashboard -> `New` -> `Blueprint` -> `Connect` tu repositorio
 
 Valores exactos:
 
-- Blueprint Name: `project-metrics-monitor`
 - Branch: `main` o tu rama productiva real
-- Blueprint Path: `project-metrics-monitor/render.yaml`
+- Blueprint Path: `project-metrics-monitor/render.paid.yaml`
 
-Haz clic en:
-
-- `Deploy Blueprint`
-
-### 10.3 Variables de entorno en Render
-
-Las pide el Blueprint porque `sync: false`:
+Variables que te pedira (porque `sync: false`):
 
 - `GITHUB_OWNER`
 - `GITHUB_REPOS`
@@ -410,7 +438,7 @@ Y deja estos valores recomendados:
 - `GITHUB_TOKEN`: generarlo en GitHub segun la seccion 8
 - `ETL_SINCE`: define la fecha historica de inicio de tu proyecto
 
-### 10.6 Como verificar que el despliegue fue exitoso
+### 10.6 Como verificar que el despliegue fue exitoso (pago)
 
 Ruta exacta:
 
@@ -443,7 +471,8 @@ Estado esperado despues de esta preparacion:
 - `requirements.txt`: dependencias runtime + tooling de desarrollo/CI
 - `pyproject.toml`: dependencias runtime, extra `dev`, build-system y configuracion de herramientas
 - `README.md`: debe referenciar esta guia y usar `--export-dir`
-- `render.yaml`: debe usar worker con persistent disk
+- `render.yaml`: despliegue gratis (web sin disco)
+- `render.paid.yaml`: despliegue con persistencia (worker + disco)
 - workflows: deben seguir instalando desde `requirements.txt` y correr lint, tests y ETL
 
 ## 12. Power BI

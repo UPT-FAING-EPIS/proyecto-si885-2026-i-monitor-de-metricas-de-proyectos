@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 from src.cli.parser import build_parser
@@ -52,7 +53,7 @@ def main() -> None:
         export_parquet=settings.export_parquet,
         public_export=settings.public_export,
     )
-    print(json.dumps(result.__dict__, ensure_ascii=True, indent=2))
+    print(json.dumps(asdict(result), ensure_ascii=True, indent=2))
 
 
 if __name__ == "__main__":

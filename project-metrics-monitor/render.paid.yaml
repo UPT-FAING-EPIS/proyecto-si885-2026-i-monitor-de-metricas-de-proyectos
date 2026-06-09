@@ -1,14 +1,18 @@
 services:
-  - type: web
-    name: project-metrics-monitor-web
+  - type: worker
+    name: project-metrics-monitor-worker
     runtime: python
-    plan: free
+    plan: starter
     region: oregon
     rootDir: project-metrics-monitor
     buildCommand: |
       python -m pip install --upgrade pip
       pip install -r requirements.txt
-    startCommand: python -m src.render_web
+    startCommand: python -m src.render_worker
+    disk:
+      name: project-metrics-data
+      mountPath: /opt/render/project/src/project-metrics-monitor/storage
+      sizeGB: 1
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.10
@@ -19,15 +23,19 @@ services:
       - key: ETL_SINCE
         value: 2026-01-01T00:00:00Z
       - key: DB_PATH
-        value: runtime_data/project_metrics.db
+        value: storage/project_metrics.db
       - key: EXPORT_DIR
-        value: runtime_data/exports
+        value: storage/exports
+      - key: ETL_INTERVAL_HOURS
+        value: "12"
+      - key: ETL_RETRY_MINUTES
+        value: "15"
       - key: ETL_RUN_ON_START
         value: "true"
       - key: ETL_EXPORT_CSV
         value: "true"
       - key: ETL_EXPORT_PARQUET
-        value: "false"
+        value: "true"
       - key: ETL_PUBLIC_EXPORT
         value: "true"
       - key: GITHUB_TOKEN

@@ -34,25 +34,29 @@ Variables requeridas:
 
 ## Render
 
-Blueprint correcto:
+Blueprints disponibles:
 
-- `project-metrics-monitor/render.yaml`
+- Gratis (sin tarjeta): `project-metrics-monitor/render.yaml`
+- Con persistencia (requiere pago): `project-metrics-monitor/render.paid.yaml`
 
-Servicio correcto:
+Servicio gratis:
+
+- `type: web`
+- `plan: free`
+- `rootDir: project-metrics-monitor`
+
+Servicio con persistencia:
 
 - `type: worker`
 - `rootDir: project-metrics-monitor`
 - `disk.mountPath: /opt/render/project/src/project-metrics-monitor/storage`
 
-Variables clave:
+Variables clave (ambos):
 
 - `GITHUB_TOKEN`
 - `GITHUB_OWNER`
 - `GITHUB_REPOS`
 - `ETL_SINCE`
-- `DB_PATH=storage/project_metrics.db`
-- `EXPORT_DIR=storage/exports`
-- `ETL_INTERVAL_HOURS=12`
 
 Importante:
 
